@@ -12,7 +12,7 @@ from utils.config_utils import ConfigUtils
 
 defaultencoding = 'utf-8'
 if sys.getdefaultencoding() != defaultencoding:
-    reload(sys)
+    # reload(sys)
     sys.setdefaultencoding(defaultencoding)
 
 HOST = "192.168.15.157"
@@ -193,7 +193,7 @@ def sort_case_results():
         })
 
     sheet_writer.close()
-    print "excel make success"
+    print("excel make success")
 
 
 # sort_case_results()
@@ -204,7 +204,7 @@ TIME_STAMP="%Y%m%d%H%M%S"
 bufsize = 1024
 
 def ftp_download():
-    print "ftp download"
+    print("ftp download")
     # 连接ftp目录
     ftp = FTP()
     ftp.set_debuglevel(0)
@@ -228,7 +228,7 @@ def ftp_download():
 
                 target_dirs.append(dirname)
 
-    print target_dirs
+    print(target_dirs)
 
     for target_dir in target_dirs:
 
@@ -242,12 +242,12 @@ def ftp_download():
                 server_path = "RETR " + target_dir + "/" + TARGET_FILE
                 ftp.retrbinary(server_path, f.write, bufsize)
                 f.close()
-        except Exception, e:
-            print "read " + target_dir + " error = ", e
+        except Exception as e:
+            print("read " + target_dir + " error = ", e)
             continue
     ftp.quit()
 ftp_download()
 
 def process(string):
-    print "process String"
+    print("process String")
 

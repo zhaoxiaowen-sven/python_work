@@ -73,17 +73,6 @@ def parse_proc():
             if not line: break
         return proc_dict
 
-proc_dict = parse1()
-wb = xlsxwriter.Workbook("proc.xlsx")
-sheet = wb.add_worksheet("proc_start_time")
-i = 0
-for k, v in proc_dict.items():
-    sheet.write(i, 0, k)
-    for x in range(len(v[0])):
-        sheet.write(i, x + 1, v[0][x])
-    i += 1
-wb.close()
-
 # def parse2():
 #     proc_dict = {"start": {}, "bound": {}}
 #     start = proc_dict.get("start")

@@ -2,16 +2,18 @@
 # coding:utf-8
 
 __author = 'zhaoxiaowen'
-import re
 import threading
 import time
 from collections import Counter
 
 import xlsxwriter
 import xlsxwriter.utility as utility
-from dateutil.parser import parse
+
+from event_parser.parsers import *
 
 DIR = "E:/Project/Pycharm/ftp_work/event/events_log"
+REPORT_PATH = "E:/Project/Pycharm/ftp_work/event_report/"
+
 RESUME_PATTERN = r"(.*)\s+\d+\s+\d+ I am_resume_activity: \[(\d+,){3}(.*)/(.*)\]"
 FOCUSED_PATTERN = r".* am_focused_activity: \[\d+,(.*)/.*\]"
 CRASH_PATTERN = r"(.*)\s+\d+\s+\d+ I am_crash: \[(\d+,){2}(.*),\d+,.*\]"
@@ -60,6 +62,7 @@ class EventLog:
         temp_crash = result.get("crash")
         temp_anr = result.get('anr')
         temp_proc = result.get("proc")
+        temp_screen = result.get("screen")
         temp_screen_focused = result.get("screen_focused")
         # 多个路径 这里加循环 for path in paths:
         with open(self.path, encoding="utf-8") as f:
@@ -78,143 +81,33 @@ class EventLog:
 
                 if line.find("am_resume_activity") != -1:  # resume的数据
                     # 06-09 21:46:53.637
-                    match_resume = re.search(RESUME_PATTERN, line)
-                    time = match_resume.group(1)
-                    time = time[6:-5]
-                    # print "time", time
-                    pkgname = match_resume.group(3)
-                    activity = match_resume.group(4)
-                    # print pkgname
-                    # temp_resume = result.get('resume')
-                    if pkgname in temp_resume.keys():
-                        v = temp_resume.get(pkgname)
-                        v[0] += 1
-                        if activity in v[1].keys():
-                            count_a = v[1].get(activity)
-                            count_a += 1
-                            v[1][activity] = count_a
-                        else:
-                            v[1][activity] = 1
-                        v[2].append(time)
-                        temp_resume[pkgname] = v
-                    else:
-                        temp_resume[pkgname] = [1, {activity: 1}, [time]]
-
+                    # self.resume_parser(line, temp_resume)
+                    ResumeParser().parse(line, temp_resume)
+                    # pass
                 elif line.find("am_crash") != -1:
-                        # match_crash:  # crash 的信息
-                    match_crash = re.search(CRASH_PATTERN, line)
-                    time = match_crash.group(1)
-                    time = time[6:-5]
-                    pkgname = match_crash.group(3)
-
-                    # temp_crash = result.get("crash")
-                    if pkgname in temp_crash.keys():
-                        v = temp_crash.get(pkgname)
-                        v[0] += 1
-                        v[1].append(time)
-                    else:
-                        temp_crash[pkgname] = [1, [time]]
-                        # print "===", time, pkgname
+                    # match_crash:  # crash 的信息
+                    # self.crashParser(line, temp_crash)
+                    CrashParser().parse(line, temp_crash)
+                    # pass
                 elif line.find("am_anr") != -1:
-                        # match_anr:  # anr的数据
-                    match_anr = re.search(ANR_PATTERN, line)
-                    time = match_anr.group(1)
-                    time = time[6:-5]
-                    pkgname = match_crash.group(3)
-                    # temp_anr = result.get('anr')
-                    if pkgname in temp_anr.keys():
-                        v = temp_anr.get(pkgname)
-                        v += 1
-                        temp_anr[pkgname] = v
-                    else:
-                        temp_anr[pkgname] = [1, [time]]
-
+                    # pass
+                    # match_anr:  # anr的数据
+                    # self.anr_parser(line, temp_anr)
+                    AnrParser().parse(line, temp_anr)
+                    # pass
                 elif line.find("screen_toggled") != -1:
-                    match_screen = re.search(SCREEN_PATTERN, line)
-                    # print "matchobj"
-                    time = match_screen.group(1)
-                    time = time[6:-5]
-                    state = match_screen.group(2).strip()
-                    # print "screen", time, state
-                    temp_screen = result.get("screen")
-                    if state in temp_screen.keys():
-                        v = temp_screen.get(state)
-                        v[0] += 1
-                        v[1].append(time)
-                        # temp_screen[state] =
-                    else:
-                        temp_screen[state] = [1, [time]]
-                    if state == '1':  # 计算亮屏后打开的第一个activity
-                        # point = f.tell()
-                        for i in range(1,10):
-                            if x + i >= length:
-                                break
-                            # line_focused = f.readline()
-                            line_focused = lines[x+i]
-                            match_tmp = re.match(SCREEN_PATTERN, line_focused)
-                            if match_tmp and match_tmp.group(2).strip() == 1:
-                                break
-                            # match_focused = re.search(FOCUSED_PATTERN, line_focused)
-                            match_focused = re.search(FOCUSED_PATTERN, line_focused)
-                            if match_focused:
-                                pkgname = match_focused.group(1).strip()
-                                # temp_screen_resume
-                                temp_screen_focused["count"] += 1
-                                if pkgname in temp_screen_focused:
-                                    temp_screen_focused[pkgname] += 1
-                                else:
-                                    temp_screen_focused[pkgname] = 1
-                                break
-
-                        # f.seek(point, 0)
-
+                    # self.screen_parser()
+                    ScreenParser().parse(length, line, lines, temp_screen, temp_screen_focused, x)
+                    # pass
                 elif line.find("proc_start") != -1:
-
-                    match_start = re.search(START_PATTERN, line)
-                    # if match_start:
-                    # 找到start_proc的地方,比较位置
-                    index = f.tell()
-                    # print(index)
-                    # type = match_start.group(4)
-                    # 连续读10行，找到bound的标记
-                    for j in range(1, 10):
-                        #line_bound = f.readline()
-                        if x+j >= length:
-                            break
-                        line_bound = lines[x+j]
-                        match_bound = re.search(BOUND_PATTERN, line_bound)
-                        if match_bound:
-                            timestr1 = match_start.group(1)
-                            procname1 = match_start.group(3)
-                            timestr2 = match_bound.group(1)
-                            procname2 = match_bound.group(3)
-                            if procname2 == procname1:  # and len(timestr1) == len(timestr2):
-                                # if procname2 == "com.android.bluetooth":
-                                # print "======", timestr1, timestr2
-                                try:
-                                    tmp = self.comparetime(timestr1, timestr2)
-                                    if tmp > 100:
-                                        break
-                                    if procname2 in temp_proc.keys():
-                                        l = temp_proc.get(procname2)
-                                        l[1].append(timestr1)
-                                        l[0].append(tmp)
-                                    else:
-                                        temp_proc[procname2] = [[tmp], [timestr1]]
-                                        break
-                                except Exception as e:
-                                    print(e, procname2, timestr1, timestr2)
-                                    # print line
-                                    # print line2
-                                    # flag = 1
-                                    break
-
-                    # f.seek(index, 0)
+                    # self.proc_parser(length, line, lines, temp_proc, x)
+                    ProcParser().parse(length, line, lines, temp_proc, x)
+                    # pass
                 else:
                     pass
                     # continue
-                # if not line:
-                #     break
+                    # if not line:
+                    #     break
         # result[] = temp
 
         return result
@@ -232,21 +125,22 @@ class EventLog:
         v = results.get("resume")
         v = sorted(v.items(), key=lambda d: d[1][0], reverse=True)
         # print v
-        t = ParseThread(self.__make_resume_sheets, (v, "resume", "event_log_resume_results.xlsx"), "resume")
+        t = ParseThread(self.__make_resume_sheets, (v, "resume", REPORT_PATH + "event_log_resume_results.xlsx"),
+                        "resume")
         threads.append(t)
 
         # 进程启动
         v = results.get("proc")
-        t = ParseThread(self.__make_proc_sheets, (v, "event_log_proc_results.xlsx"), "proc")
+        t = ParseThread(self.__make_proc_sheets, (v, REPORT_PATH + "event_log_proc_results.xlsx"), "proc")
         threads.append(t)
 
         # 异常数据 anr crash
-        t = ParseThread(self.__make_except_sheets, (results, "event_log_except_results.xlsx"), "except")
+        t = ParseThread(self.__make_except_sheets, (results, REPORT_PATH + "event_log_except_results.xlsx"), "except")
         threads.append(t)
 
         # 亮屏解锁的数据
         v = results.get("screen")
-        t = ParseThread(self.__make_screen_sheets, (results, "event_log_screen_results.xlsx"), "screen")
+        t = ParseThread(self.__make_screen_sheets, (results, REPORT_PATH + "/event_log_screen_results.xlsx"), "screen")
 
         threads.append(t)
 
@@ -294,7 +188,7 @@ class EventLog:
         wb = xlsxwriter.Workbook(xlsx_name)
         fmt = wb.add_format()
         sort_list = sorted(sort_dict.items(), key=lambda d: d[0], reverse=False)
-        print("sort_list", sort_list)
+        # print("sort_list", sort_list)
         self.__make_proc_main_sheet(wb, sort_list, fmt)
         # for k in sort_list:
         #     key = k[0].replace
@@ -433,7 +327,7 @@ class EventLog:
             for k0 in res:
                 tmp.append(k0[0:2])
             tmp_dict[k[0]] = dict(Counter(tmp))
-        print("tmp_dict", tmp_dict)
+        # print("tmp_dict", tmp_dict)
 
         i = 1
         for k, v in tmp_dict.items():
@@ -527,7 +421,7 @@ class EventLog:
     def gen_chart_style2(self, chart, d, sheet_name, x_name, y_name):
         i = len(d)
         l = list(d.keys())
-        print("gen_chart_style2", l)
+        # print("gen_chart_style2", l)
         for x in range(1, i + 1):
             chart.add_series({
                 'categories': [sheet_name, 1, 0, 25, 0],
@@ -579,9 +473,8 @@ class EventLog:
 
 
 if __name__ == '__main__':
-
     start = time.time()
-    print("parse start at %s" % start)
+    print("parse start at ...")
     eventlog = EventLog(DIR)
     eventlog.parse()
     end = time.time() - start
