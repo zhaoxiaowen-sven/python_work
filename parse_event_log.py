@@ -63,17 +63,22 @@ class EventLog:
         temp_screen_focused = result.get("screen_focused")
         # 多个路径 这里加循环 for path in paths:
         with open(self.path, encoding="utf-8") as f:
-            while True:
-                line = f.readline()
+            # while True:
+            lines = f.readlines()
+            length = len(lines)
+            for x in range(length):
+                # line = f.readline()
                 # for line in f:
-                match_resume = re.search(RESUME_PATTERN, line)
-                match_crash = re.search(CRASH_PATTERN, line)
-                match_anr = re.search(ANR_PATTERN, line)
-                match_screen = re.search(SCREEN_PATTERN, line)
-                match_start = re.search(START_PATTERN, line)
+                line = lines[x]
+                # match_resume = re.search(RESUME_PATTERN, line)
+                # match_crash = re.search(CRASH_PATTERN, line)
+                # match_anr = re.search(ANR_PATTERN, line)
+                # match_screen = re.search(SCREEN_PATTERN, line)
+                # match_start = re.search(START_PATTERN, line)
 
-                if match_resume:  # resume的数据
+                if line.find("am_resume_activity") != -1:  # resume的数据
                     # 06-09 21:46:53.637
+                    match_resume = re.search(RESUME_PATTERN, line)
                     time = match_resume.group(1)
                     time = time[6:-5]
                     # print "time", time
@@ -95,7 +100,9 @@ class EventLog:
                     else:
                         temp_resume[pkgname] = [1, {activity: 1}, [time]]
 
-                elif match_crash:  # crash 的信息
+                elif line.find("am_crash") != -1:
+                        # match_crash:  # crash 的信息
+                    match_crash = re.search(CRASH_PATTERN, line)
                     time = match_crash.group(1)
                     time = time[6:-5]
                     pkgname = match_crash.group(3)
@@ -108,8 +115,10 @@ class EventLog:
                     else:
                         temp_crash[pkgname] = [1, [time]]
                         # print "===", time, pkgname
-                elif match_anr:  # anr的数据
-                    time = match_crash.group(1)
+                elif line.find("am_anr") != -1:
+                        # match_anr:  # anr的数据
+                    match_anr = re.search(ANR_PATTERN, line)
+                    time = match_anr.group(1)
                     time = time[6:-5]
                     pkgname = match_crash.group(3)
                     # temp_anr = result.get('anr')
@@ -120,7 +129,8 @@ class EventLog:
                     else:
                         temp_anr[pkgname] = [1, [time]]
 
-                elif match_screen:
+                elif line.find("screen_toggled") != -1:
+                    match_screen = re.search(SCREEN_PATTERN, line)
                     # print "matchobj"
                     time = match_screen.group(1)
                     time = time[6:-5]
@@ -135,9 +145,12 @@ class EventLog:
                     else:
                         temp_screen[state] = [1, [time]]
                     if state == '1':  # 计算亮屏后打开的第一个activity
-                        point = f.tell()
-                        for x in range(10):
-                            line_focused = f.readline()
+                        # point = f.tell()
+                        for i in range(1,10):
+                            if x + i >= length:
+                                break
+                            # line_focused = f.readline()
+                            line_focused = lines[x+i]
                             match_tmp = re.match(SCREEN_PATTERN, line_focused)
                             if match_tmp and match_tmp.group(2).strip() == 1:
                                 break
@@ -153,17 +166,22 @@ class EventLog:
                                     temp_screen_focused[pkgname] = 1
                                 break
 
-                        f.seek(point, 0)
+                        # f.seek(point, 0)
 
-                elif match_start:
+                elif line.find("proc_start") != -1:
+
+                    match_start = re.search(START_PATTERN, line)
                     # if match_start:
                     # 找到start_proc的地方,比较位置
                     index = f.tell()
                     # print(index)
                     # type = match_start.group(4)
                     # 连续读10行，找到bound的标记
-                    for x in range(10):
-                        line_bound = f.readline()
+                    for j in range(1, 10):
+                        #line_bound = f.readline()
+                        if x+j >= length:
+                            break
+                        line_bound = lines[x+j]
                         match_bound = re.search(BOUND_PATTERN, line_bound)
                         if match_bound:
                             timestr1 = match_start.group(1)
@@ -191,12 +209,12 @@ class EventLog:
                                     # flag = 1
                                     break
 
-                    f.seek(index, 0)
+                    # f.seek(index, 0)
                 else:
                     pass
                     # continue
-                if not line:
-                    break
+                # if not line:
+                #     break
         # result[] = temp
 
         return result
