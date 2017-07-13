@@ -6,30 +6,21 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="90a6d998-8d07-442e-a39d-569479def571" name="Default" comment="test">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/CommonTest.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/adb_recheck.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/copy_event_logs.py" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/event_log/bug/events_log" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/event_log/bug/events_log(1)" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/event_log/bug/events_log1" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/event_log/dut/events_log0" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/event_log/dut/events_log1" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/event_log/dut/events_log2" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/event_log/dut/events_log3" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/event_log/dut/events_log4" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/event_log/dut/events_log5" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/event_log/dut/events_log6" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/event_log/dut/events_log7" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/event_log/dut/events_log8" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/event_log/dut/events_log9" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/text.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/misc.xml" afterPath="$PROJECT_DIR$/.idea/misc.xml" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/event_log/bug/events_log" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/event_log/bug/events_log(1)" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/event_log/bug/events_log1" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/event_log/dut/events_log0" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/event_log/dut/events_log1" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/event_log/dut/events_log2" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/event_log/dut/events_log3" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/event_log/dut/events_log4" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/event_log/dut/events_log5" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/event_log/dut/events_log6" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/event_log/dut/events_log7" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/event_log/dut/events_log8" afterPath="" />
+      <change type="DELETED" beforePath="$PROJECT_DIR$/event_log/dut/events_log9" afterPath="" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.gitignore" afterPath="$PROJECT_DIR$/.gitignore" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/event_parser/parsers.py" afterPath="$PROJECT_DIR$/event_parser/parsers.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/ftp_access.py" afterPath="$PROJECT_DIR$/ftp_access.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/parse_event_log.py" afterPath="$PROJECT_DIR$/parse_event_log.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/parse_event_log_update.py" afterPath="$PROJECT_DIR$/parse_event_log_update.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/test.py" afterPath="$PROJECT_DIR$/test.py" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -44,7 +35,7 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="parse_event_log.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="parse_event_log.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/parse_event_log.py">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="23">
@@ -52,6 +43,46 @@
               <folding>
                 <element signature="e#359#368#0" expanded="true" />
               </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name=".gitignore" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/.gitignore">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="138">
+              <caret line="6" column="10" lean-forward="false" selection-start-line="6" selection-start-column="10" selection-end-line="6" selection-end-column="10" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="adb_recheck.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/adb_recheck.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="0">
+              <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="CommonTest.py" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/CommonTest.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="0">
+              <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="ftp_access.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/ftp_access.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="0">
+              <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+              <folding />
             </state>
           </provider>
         </entry>
@@ -179,7 +210,6 @@
         <option value="$PROJECT_DIR$/event_log/tag_parsers/parsers.py" />
         <option value="$PROJECT_DIR$/event_log/parse_event_log.py" />
         <option value="$PROJECT_DIR$/ftp_download2.py" />
-        <option value="$PROJECT_DIR$/.gitignore" />
         <option value="$PROJECT_DIR$/parse_event_log_update.py" />
         <option value="$PROJECT_DIR$/sheet_builder.py" />
         <option value="$PROJECT_DIR$/adb.py" />
@@ -192,12 +222,13 @@
         <option value="$PROJECT_DIR$/event_parser/parsers.py" />
         <option value="$PROJECT_DIR$/test.py" />
         <option value="$PROJECT_DIR$/parse_event_log.py" />
+        <option value="$PROJECT_DIR$/.gitignore" />
       </list>
     </option>
   </component>
   <component name="ProjectFrameBounds">
-    <option name="x" value="-7" />
-    <option name="y" value="395" />
+    <option name="x" value="485" />
+    <option name="y" value="23" />
     <option name="width" value="1616" />
     <option name="height" value="834" />
   </component>
@@ -233,7 +264,20 @@
           </PATH>
         </subPane>
       </pane>
-      <pane id="Scope" />
+      <pane id="Scope">
+        <subPane subId="Project Files">
+          <PATH>
+            <PATH_ELEMENT USER_OBJECT="Root">
+              <option name="myItemId" value="" />
+              <option name="myItemType" value="" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT USER_OBJECT="ftp_work">
+              <option name="myItemId" value="" />
+              <option name="myItemType" value="" />
+            </PATH_ELEMENT>
+          </PATH>
+        </subPane>
+      </pane>
       <pane id="Scratches" />
     </panes>
   </component>
@@ -512,7 +556,7 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="-7" y="395" width="1616" height="834" extended-state="1" />
+    <frame x="485" y="23" width="1616" height="834" extended-state="0" />
     <layout>
       <window_info id="Project" active="true" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.23586118" sideWeight="0.82310987" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32952926" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
@@ -599,13 +643,6 @@
       </provider>
     </entry>
     <entry file="file://D:/AutoTest/UniversalTest/performance_CommonTest/CommonTest.py" />
-    <entry file="file://$PROJECT_DIR$/.gitignore">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="115">
-          <caret line="5" column="13" lean-forward="false" selection-start-line="5" selection-start-column="13" selection-end-line="5" selection-end-column="13" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$APPLICATION_HOME_DIR$/helpers/pycharm/_jb_unittest_runner.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="667">
@@ -743,22 +780,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/ftp_access.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="460">
-          <caret line="27" column="15" lean-forward="false" selection-start-line="27" selection-start-column="15" selection-end-line="27" selection-end-column="15" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/CommonTest.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="265">
-          <caret line="176" column="12" lean-forward="true" selection-start-line="176" selection-start-column="12" selection-end-line="176" selection-end-column="12" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/some_array.npy" />
     <entry file="file://$PROJECT_DIR$/event_parser/__init__.py">
       <provider selected="true" editor-type-id="text-editor">
@@ -771,16 +792,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="391">
           <caret line="17" column="0" lean-forward="false" selection-start-line="17" selection-start-column="0" selection-end-line="17" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/adb_recheck.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="3680">
-          <caret line="164" column="24" lean-forward="false" selection-start-line="164" selection-start-column="24" selection-end-line="164" selection-end-column="24" />
-          <folding>
-            <element signature="e#30#43#0" expanded="false" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -891,6 +902,38 @@
           <folding>
             <element signature="e#359#368#0" expanded="true" />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/.gitignore">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="138">
+          <caret line="6" column="10" lean-forward="false" selection-start-line="6" selection-start-column="10" selection-end-line="6" selection-end-column="10" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/adb_recheck.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/ftp_access.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/CommonTest.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
         </state>
       </provider>
     </entry>
