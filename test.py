@@ -140,15 +140,34 @@ s3 = "06-05 17:20:41.243  3093  4830 I am_kill : [0,7680,com.volte.config,906,em
 #     process = match_kill.group(2)
 #     oom_adj = match_kill.group(3)
 #     print(time, process, oom_adj)
-s5 = "06-05 17:53:43.939  3093  3629 I am_meminfo: [323739648,114036736,0,330731520,259238912]"
-MEM_PATTERN = r"(.*)\s+\d+\s+\d+ I am_meminfo: \[(\d+),(\d+),(\d+),(\d+),(\d+)\]"
-match_mem = re.search(MEM_PATTERN, s5)
-if match_mem:
-    print(222)
-    time = match_mem.group(1)
-    cached = match_mem.group(2)
-    free = match_mem.group(3)
-    zram = match_mem.group(4)
-    kernel = match_mem.group(5)
-    native = match_mem.group(6)
-    print(cached, free, zram, kernel, native)
+# s5 = "06-05 17:53:43.939  3093  3629 I am_meminfo: [323739648,114036736,0,330731520,259238912]"
+# MEM_PATTERN = r"(.*)\s+\d+\s+\d+ I am_meminfo: \[(\d+),(\d+),(\d+),(\d+),(\d+)\]"
+# match_mem = re.search(MEM_PATTERN, s5)
+# if match_mem:
+#     print(222)
+#     time = match_mem.group(1)
+#     cached = match_mem.group(2)
+#     free = match_mem.group(3)
+#     zram = match_mem.group(4)
+#     kernel = match_mem.group(5)
+#     native = match_mem.group(6)
+#     print(float(cached)+float(free))
+#     print(cached, free, zram, kernel, native)
+# line = "#07-13 09:29:24.014  1423 15264 D VivoPerfService: 1030_3: com.jingdong.app.mall/.MainFrameActivity#31#14963#com.jingdong.app.mall"
+# pattern = r"(.*)\s+\d+\s+\d+ D VivoPerfService: 1030_3: (\S+)#(\d+)#(\d+)#(\S+)"
+# if line.find("VivoPerfService") != -1:
+#     match_obj = re.search(pattern, line)
+#     if match_obj:
+#         time = match_obj.group(1)
+#         process = match_obj.group(2)
+#         frame = match_obj.group(3)
+#         pkg = match_obj.group(5)
+#         print(time, process, frame, pkg)
+
+# d = {"a":[1]}
+# d.get('a').append(1)
+# print(d)
+
+li=[(2,'a'),(4,'b'),(1,'d')]
+li.sort()
+print(li)

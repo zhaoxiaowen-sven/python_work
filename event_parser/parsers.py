@@ -17,7 +17,7 @@ START_PATTERN = r"(.*)\s+\d+\s+\d+ I am_proc_start: \[\d+,(\d+),\d+,(.*),(.*),.*
 BOUND_PATTERN = r"(.*)\s+\d+\s+\d+ I am_proc_bound: \[\d+,(\d+),(.*)\]"
 # 内存
 PSS_PATTERN = r"(.*)\s+\d+\s+\d+ I am_pss  : \[\d+,\d+,([^,]+),(\d+),(\d+)(,\d+)?\]"
-MEM_PATTERN = r"(.*)\s+\d+\s+\d+ I am_pss  : \[\d+,\d+,([^,]+),(\d+),(\d+)(,\d+)?\]"
+MEM_PATTERN = r"(.*)\s+\d+\s+\d+ I am_meminfo: \[(\d+),(\d+),(\d+),(\d+),(\d+)\]"
 
 # 杀进程相关
 KILL_PATTERN = r"(.*)\s+\d+\s+\d+ I am_kill : \[\d+,\d+,([^,]+),(\d+),.*\]"
@@ -49,6 +49,28 @@ class Parser(object):
                 break
         return flag
 
+class MemParser(Parser):
+    def parse(self, line, temp_mem):
+        match_mem = re.search(MEM_PATTERN, line)
+        if match_mem:
+            time = match_mem.group(1)
+            time = time[6:-5]
+
+            cached = match_mem.group(2)
+            free = match_mem.group(3)
+            zram = match_mem.group(4)
+            kernel = match_mem.group(5)
+            native = match_mem.group(6)
+            print(time, cached, free, zram, kernel, native)
+
+            temp_mem.get("time").append(time)
+            temp_mem.get("cached").append(cached)
+            temp_mem.get("free").append(free)
+            temp_mem.get("zram").append(zram)
+            temp_mem.get("kernel").append(kernel)
+            temp_mem.get("native").append(native)
+
+    # pass
 
 class KillParser(Parser):
     def parse(self, line, temp_kill):

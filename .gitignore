@@ -1,7 +1,8 @@
 *.xlsx
 logs
-event
 report
 .idea
 .event_report
 .event_log
+.idea/
+*.pyc
