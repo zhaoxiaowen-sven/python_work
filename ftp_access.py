@@ -12,7 +12,7 @@ from utils.config_utils import ConfigUtils
 
 defaultencoding = 'utf-8'
 if sys.getdefaultencoding() != defaultencoding:
-    # reload(sys)
+    reload(sys)
     sys.setdefaultencoding(defaultencoding)
 
 HOST = "192.168.15.157"

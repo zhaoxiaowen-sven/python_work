@@ -15,7 +15,7 @@ from dateutil.parser import parse
 
 TIME_STAMP = "%m-%d %H:%M:%S.%f"
 
-DIR = "E:/Project/Pycharm/ftp_work/event/events_log"
+DIR = "E:/Project/Pycharm/ftp_work/event/events_log0"
 START_PATTERN = r"(.*)\s+\d+\s+\d+ I am_proc_start: \[(\d+,){3}(.*),(.*),.*\]"
 BOUND_PATTERN = r"(.*)\s+\d+\s+\d+ I am_proc_bound: \[(\d+,){2}(.*)\]"
 

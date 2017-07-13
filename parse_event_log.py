@@ -1,17 +1,30 @@
 #!/usr/bin/env python
 # coding:utf-8
+SCREEN_REPORT = "event_log_screen_results.xlsx"
+EXCEPT_REPORT = "event_log_except_results.xlsx"
+PROC_REPORT = "event_log_proc_results.xlsx"
+RESUME_REPORT = "event_log_resume_results.xlsx"
+PSS_REPORT = "event_log_pss_results.xlsx"
+KILL_REPORT = "event_log_kill_results.xlsx"
+
+MB = 1024.0 * 1024.0
 
 __author = 'zhaoxiaowen'
+import os
 import threading
 import time
 from collections import Counter
 
+import numpy as np
 import xlsxwriter
 import xlsxwriter.utility as utility
 
 from event_parser.parsers import *
 
-DIR = "E:/Project/Pycharm/ftp_work/event/events_log"
+# DIR = "E:/Project/Pycharm/ftp_work/event/"
+DIR = "D:/log/eventlog/PD1610/"
+# DIR2 = "E:/Project/Pycharm/ftp_work/event/"
+# DIR = "D:/log2/eventlog/862668030011416/"
 REPORT_PATH = "E:/Project/Pycharm/ftp_work/event_report/"
 
 RESUME_PATTERN = r"(.*)\s+\d+\s+\d+ I am_resume_activity: \[(\d+,){3}(.*)/(.*)\]"
@@ -22,6 +35,8 @@ SCREEN_PATTERN = "(.*)\s+\d+\s+\d+ I screen_toggled: (\d+)"
 
 START_PATTERN = r"(.*)\s+\d+\s+\d+ I am_proc_start: \[(\d+,){3}(.*),(.*),.*\]"
 BOUND_PATTERN = r"(.*)\s+\d+\s+\d+ I am_proc_bound: \[(\d+,){2}(.*)\]"
+
+HOUR = 60 * 60 * 1000.0
 
 
 class ParseThread(threading.Thread):
@@ -37,83 +52,110 @@ class ParseThread(threading.Thread):
 
 
 class EventLog:
-    def __init__(self, path):
+    def __init__(self, path, prefix_name):
         # print("init")
         self.path = path
+        self.prefix_name = prefix_name
 
     def parse(self, rev=True):
         start_time = time.time()
         results = self.parse_files()
+        # print("pss", results.get('pss'))
+
         end_time = time.time() - start_time
         print("parse files end %.1f s" % end_time)
         # print(results)
         # print results.get("screen").keys()
         # for k, v in results.get("screen").items():
         #     print(k, v)
-        self.make_sheets(results)
+        self.make_sheets(results, self.prefix_name)
 
     def comparetime(self, time1, time2):
         return (parse(time2) - parse(time1)).total_seconds() * 1000
 
     def parse_files(self):
         # result = {'resume': {}, 'focused': {}}
-        result = {'resume': {}, 'crash': {}, 'anr': {}, 'screen': {}, "proc": {}, "screen_focused": {"count": 1}}
-        temp_resume = result.get('resume')
-        temp_crash = result.get("crash")
-        temp_anr = result.get('anr')
-        temp_proc = result.get("proc")
+        result = {'count_time': 0, 'resume': {}, 'crash': {}, 'anr': {}, 'screen': {}, "proc": {},
+                  "screen_focused": {"count": 1}, 'pss': {}, "kill": {}}
+        filepaths = []
+        for dirpath, dirnames, filenames in os.walk(self.path):
+            for file in filenames:
+                filepaths.append(os.path.join(dirpath, file))
+        # print(filepaths)
+        for p in filepaths:
+            print("======", p, "======")
+            self.parse_file(p, result)  # result[] = temp
+
+        return result
+
+    def parse_file(self, path, result):
+        # temp_resume = result.get('resume')
+        # temp_crash = result.get("crash")
+        # temp_anr = result.get('anr')
+        # temp_proc = result.get("proc")
         temp_screen = result.get("screen")
         temp_screen_focused = result.get("screen_focused")
+        # temp_pss = result.get("pss")
+        # count_time = result.get('count_time')
+        # print("****", count_time)
         # 多个路径 这里加循环 for path in paths:
-        with open(self.path, encoding="utf-8") as f:
+        with open(path, encoding="utf-8") as f:
             # while True:
+
             lines = f.readlines()
             length = len(lines)
+            try:
+                first_line = lines[0]
+                end_line = lines[length - 1]
+                result['count_time'] += self.comparetime(first_line[0:18], end_line[0:18])
+            except Exception as e:
+                print("#####file wrong" + path + "#####")
+            # print("count_time", count_time)
             for x in range(length):
                 # line = f.readline()
                 # for line in f:
                 line = lines[x]
-                # match_resume = re.search(RESUME_PATTERN, line)
-                # match_crash = re.search(CRASH_PATTERN, line)
-                # match_anr = re.search(ANR_PATTERN, line)
-                # match_screen = re.search(SCREEN_PATTERN, line)
-                # match_start = re.search(START_PATTERN, line)
 
                 if line.find("am_resume_activity") != -1:  # resume的数据
                     # 06-09 21:46:53.637
                     # self.resume_parser(line, temp_resume)
-                    ResumeParser().parse(line, temp_resume)
-                    # pass
+                    # ResumeParser().parse(line, result.get('resume'))
+                    pass
                 elif line.find("am_crash") != -1:
                     # match_crash:  # crash 的信息
                     # self.crashParser(line, temp_crash)
-                    CrashParser().parse(line, temp_crash)
-                    # pass
+                    # CrashParser().parse(line, result.get("crash"))
+                    pass
                 elif line.find("am_anr") != -1:
-                    # pass
+                    pass
                     # match_anr:  # anr的数据
                     # self.anr_parser(line, temp_anr)
-                    AnrParser().parse(line, temp_anr)
-                    # pass
+                    # AnrParser().parse(line, result.get('anr'))
                 elif line.find("screen_toggled") != -1:
-                    # self.screen_parser()
-                    ScreenParser().parse(length, line, lines, temp_screen, temp_screen_focused, x)
-                    # pass
+                    # ScreenParser().parse(length, line, lines, temp_screen, temp_screen_focused, x)
+                    pass
                 elif line.find("proc_start") != -1:
                     # self.proc_parser(length, line, lines, temp_proc, x)
-                    ProcParser().parse(length, line, lines, temp_proc, x)
+                    # ProcParser().parse(length, line, lines, result.get("proc"), x)
+                    pass
+                elif line.find("am_pss") != -1:
+                    # print("am_pss")
+                    PssParser().parse(line, result.get("pss"))
                     # pass
+                elif line.find("am_kill") != -1:
+                    KillParser().parse(line, result.get('kill'))
                 else:
                     pass
                     # continue
                     # if not line:
                     #     break
-        # result[] = temp
 
-        return result
+    # 画图相关
+    def make_sheets(self, results, prefix_name):
 
-    #   画图相关
-    def make_sheets(self, results):
+        time = results.get("count_time")
+        print("统计时间总和 = " + str(time / HOUR) + " 小时")
+
         threads = []
         # for k, v in results.iteritems():
         # print k, v
@@ -122,25 +164,33 @@ class EventLog:
         # self.__make_sheet(wb, v, k, fmt)
 
         # resume 的数据
-        v = results.get("resume")
-        v = sorted(v.items(), key=lambda d: d[1][0], reverse=True)
-        # print v
-        t = ParseThread(self.__make_resume_sheets, (v, "resume", REPORT_PATH + "event_log_resume_results.xlsx"),
-                        "resume")
-        threads.append(t)
+        # v = results.get("resume")
+        # v = sorted(v.items(), key=lambda d: d[1][0], reverse=True)
+        # # print v
+        # t = ParseThread(self.__make_resume_sheets, (v, "resume", REPORT_PATH + prefix_name + RESUME_REPORT),
+        #                 "resume")
+        # threads.append(t)
 
         # 进程启动
         v = results.get("proc")
-        t = ParseThread(self.__make_proc_sheets, (v, REPORT_PATH + "event_log_proc_results.xlsx"), "proc")
+        t = ParseThread(self.__make_proc_sheets, (v, REPORT_PATH + prefix_name + PROC_REPORT), "proc")
         threads.append(t)
 
         # 异常数据 anr crash
-        t = ParseThread(self.__make_except_sheets, (results, REPORT_PATH + "event_log_except_results.xlsx"), "except")
+        t = ParseThread(self.__make_except_sheets, (results, REPORT_PATH + prefix_name + EXCEPT_REPORT), "except")
         threads.append(t)
 
         # 亮屏解锁的数据
         v = results.get("screen")
-        t = ParseThread(self.__make_screen_sheets, (results, REPORT_PATH + "/event_log_screen_results.xlsx"), "screen")
+        t = ParseThread(self.__make_screen_sheets, (results, REPORT_PATH + prefix_name + SCREEN_REPORT), "screen")
+
+        # 内存变化数据
+        v = results.get("pss")
+        t = ParseThread(self.__make_pss_sheets, (v, REPORT_PATH + prefix_name + PSS_REPORT), "pss")
+
+        # 杀进程的数据
+        v = results.get("kill")
+        t = ParseThread(self.__make_kill_sheets, (v, REPORT_PATH + prefix_name + KILL_REPORT), "pss")
 
         threads.append(t)
 
@@ -148,6 +198,60 @@ class EventLog:
 
         # self.__make_resume_sheets(v, "resume")
         #
+
+    def __make_kill_sheets(self, kill_result, xlsx_name):
+        print(kill_result)
+        sort_list = sorted(kill_result.items(), key=lambda d: d[1])
+        wb = xlsxwriter.Workbook(xlsx_name)
+        sheet = wb.add_worksheet("kill")
+        sheet.write(0, 0, "PROC_NAME")
+        sheet.write(0, 1, "TIMES")
+        for i in range(len(sort_list)):
+            sheet.write(i+1, 0, sort_list[i][0])
+            sheet.write(i+1, 1, sort_list[i][1])
+        wb.close()
+        # pass
+
+    def __make_pss_sheets(self, pss_list, xlsx_name):
+        pss = sorted(pss_list.items(), key=lambda d: d[0])
+        print(pss)
+        wb = xlsxwriter.Workbook(xlsx_name)
+        # pss_mb = [i/MB for i in pss[1][0]]
+        # i = 0
+        # for v in pss:
+        #     sheet.write(i, 0, v[0])
+        #     pss_mb = [float(i)/MB for i in v[1][0]]
+        #     avg = np.mean(pss_mb)
+        #     # for j in range(len(pss_mb)):
+        #     sheet.write(i, 1, avg)
+        #     i += 1
+        list_arr = [100, 200, 300, 400, 500, 1000]
+        spread_dict = self.method_spread2(list_arr, pss)
+        self.__make_proc_spread_sheet(wb, "pss_spread_sheet", spread_dict, self.generate_unit(list_arr))
+        wb.close()
+        # pass
+
+    def method_spread2(self, list_arr, sort_list):
+        print(sort_list)
+        len1 = len(list_arr)
+        spread_dict = {}
+        for v in sort_list:
+            process = v[0]
+            print(v)
+            interval = [(float(i)/MB) for i in v[1][0]]
+            arr = [i for i in np.array(interval)]
+            avg = 0 if len(arr) == 0 else np.mean(arr)
+            # avg = np.mean(arr)
+            values = [0] * (len1 + 1)
+            for i in interval:
+                for j in range(len1):
+                    if i < list_arr[j]:
+                        values[j] += 1
+                        break
+                    if j == len1 - 1:
+                        values[len1] += 1
+            spread_dict[process] = [values, avg]
+        return spread_dict
 
     def __make_screen_sheets(self, results, xlsx_name):
         print("__make_screen_sheets")
@@ -188,12 +292,72 @@ class EventLog:
         wb = xlsxwriter.Workbook(xlsx_name)
         fmt = wb.add_format()
         sort_list = sorted(sort_dict.items(), key=lambda d: d[0], reverse=False)
-        # print("sort_list", sort_list)
-        self.__make_proc_main_sheet(wb, sort_list, fmt)
+        # print("proc_list", sort_list)
+
+        list_arr = [50, 100, 1000]
+        spread_dict = self.method_spread(list_arr, sort_list)
+        # print(spread_dict)
+        self.__make_proc_spread_sheet(wb, "spread_sheet", spread_dict, self.generate_unit(list_arr))
+        # self.__make_proc_main_sheet(wb, sort_list, fmt)
         # for k in sort_list:
         #     key = k[0].replace
         #     self.__make_proc_sub_sheet(wb, k[0], k[1][0])
         wb.close()
+
+    def method_spread(self, list_arr, sort_list):
+        len1 = len(list_arr)
+        spread_dict = {}
+        for v in sort_list:
+            process = v[0]
+            interval = v[1][0]
+            arr = [float(i) for i in np.array(interval) if i < 100]
+            avg = 0 if len(arr) == 0 else np.mean(arr)
+            # avg = np.mean(arr)
+            values = [0] * (len1 + 1)
+            for i in interval:
+                for j in range(len1):
+                    if i < list_arr[j]:
+                        values[j] += 1
+                        break
+                    if j == len1 - 1:
+                        values[len1] += 1
+            spread_dict[process] = [values, avg]
+        return spread_dict
+
+    # 生成区间段的list
+    def generate_unit(self, list_arr):
+        list_arr.sort()
+        keys = []
+        size = len(list_arr)
+        i = 0
+        while i < size:
+            if i == 0:
+                key = '<' + str(list_arr[i])
+            else:
+                key = str(list_arr[i - 1]) + '-' + str(list_arr[i])
+            keys.append(key)
+            i += 1
+        keys.append('>' + str(list_arr[-1]))
+        return keys
+
+    def __make_proc_spread_sheet(self, wb, sheet_name, sort_list, keys):
+        sheet = wb.add_worksheet(sheet_name)
+        # print(keys)
+        len1 = len(keys)
+        sheet.write(0, 0, "PROC_NAME")
+        sheet.write(0, len1 + 1, "AVEG")
+        for x in range(0, len1):
+            sheet.write(0, x + 1, keys[x])
+        sorted_list = sorted(sort_list.items(), key=lambda d: d[0])
+        i = 1
+        for v in sorted_list:
+            sheet.write(i, 0, v[0])
+            sheet.write(i, len1 + 1, v[1][1])
+            l = v[1][0]
+            len2 = len(l)
+            for x in range(len2):
+                sheet.write(i, x + 1, l[x])
+            i += 1
 
     def __make_proc_sub_sheet(self, wb, sheet_sub_name, sort_list):
         sheet = wb.add_worksheet(sheet_sub_name)
@@ -276,12 +440,12 @@ class EventLog:
         wb = xlsxwriter.Workbook(xlsx_name)
         # crash 的数据
         v = results.get("crash")
-        v = sorted(v.items(), key=lambda d: d[0], reverse=True)
+        v = sorted(v.items(), key=lambda d: d[1], reverse=True)
         self.__make_except_sheet(v, wb, "crash")
 
         # anr 的数据
         v = results.get("anr")
-        v = sorted(v.items(), key=lambda d: d[0], reverse=True)
+        v = sorted(v.items(), key=lambda d: d[1], reverse=True)
         self.__make_except_sheet(v, wb, "anr")
         wb.close()
 
@@ -340,7 +504,7 @@ class EventLog:
             i += 1
         # chart = wb.add_chart({'type': 'scatter'})
         chart = wb.add_chart({'type': 'line'})
-        sheet.insert_chart(i + 1, 0, chart)
+        sheet.insert_chart(25 + 1, 0, chart)
         self.gen_chart_style2(chart, tmp_dict, sheet_name, "Time", "Times")
 
     def __make_main_sheet(self, sheet_name, sorted_tuple, wb, fmt):
@@ -475,8 +639,10 @@ class EventLog:
 if __name__ == '__main__':
     start = time.time()
     print("parse start at ...")
-    eventlog = EventLog(DIR)
+    eventlog = EventLog(DIR, "PD1610")
+    # eventlog = EventLog(DIR2, "test")
     eventlog.parse()
+    # EventLog("D:/log/eventlog/PD1619/", "PD1619").parse()
     end = time.time() - start
     print("parse and make sheet end in %.1f s" % end)
 # thread = ParseThread("Thread-1", 1)
