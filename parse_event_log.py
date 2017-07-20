@@ -19,11 +19,16 @@ import datetime
 import numpy as np
 import xlsxwriter
 import xlsxwriter.utility as utility
+from pandas import DataFrame,Series
+import pandas as pd
+import matplotlib.pyplot as plt
+
 
 from event_parser.parsers import *
 
 # DIR = "E:/Project/Pycharm/ftp_work/event/"
-# DIR = "D:/log/eventlog/PD1610/"
+DIR = "D:/log/eventlog/PD1610/"
+DIR3 = "D:/log/eventlog/PD1619/"
 DIR2 = "E:/Project/Pycharm/ftp_work/event/"
 
 # DIR = "D:/log2/eventlog/862668030011416/"
@@ -63,7 +68,6 @@ class EventLog:
         start_time = time.time()
         results = self.parse_files()
         # print("pss", results.get('pss'))
-
         end_time = time.time() - start_time
         print("parse files end %.1f s" % end_time)
         # print(results)
@@ -123,25 +127,24 @@ class EventLog:
                 if line.find("am_resume_activity") != -1:  # resume的数据
                     # 06-09 21:46:53.637
                     # self.resume_parser(line, temp_resume)
-                    # ResumeParser().parse(line, result.get('resume'))
-                    pass
+                    ResumeParser().parse(line, result.get('resume'))
+                    # pass
                 elif line.find("am_crash") != -1:
                     # match_crash:  # crash 的信息
                     # self.crashParser(line, temp_crash)
-                    # CrashParser().parse(line, result.get("crash"))
-                    pass
+                    CrashParser().parse(line, result.get("crash"))
+                    # pass
                 elif line.find("am_anr") != -1:
-                    pass
                     # match_anr:  # anr的数据
                     # self.anr_parser(line, temp_anr)
-                    # AnrParser().parse(line, result.get('anr'))
+                    AnrParser().parse(line, result.get('anr'))
                 elif line.find("screen_toggled") != -1:
-                    # ScreenParser().parse(length, line, lines, temp_screen, temp_screen_focused, x)
-                    pass
+                    ScreenParser().parse(length, line, lines, temp_screen, temp_screen_focused, x)
+                    # pass
                 elif line.find("proc_start") != -1:
                     # self.proc_parser(length, line, lines, temp_proc, x)
-                    # ProcParser().parse(length, line, lines, result.get("proc"), x)
-                    pass
+                    ProcParser().parse(length, line, lines, result.get("proc"), x)
+                    # pass
                 elif line.find("am_pss") != -1:
                     # print("am_pss")
                     PssParser().parse(line, result.get("pss"))
@@ -171,12 +174,12 @@ class EventLog:
         # self.__make_sheet(wb, v, k, fmt)
 
         # resume 的数据
-        # v = results.get("resume")
-        # v = sorted(v.items(), key=lambda d: d[1][0], reverse=True)
-        # # print v
-        # t = ParseThread(self.__make_resume_sheets, (v, "resume", REPORT_PATH + prefix_name + RESUME_REPORT),
-        #                 "resume")
-        # threads.append(t)
+        v = results.get("resume")
+        v = sorted(v.items(), key=lambda d: d[1][0], reverse=True)
+        # print v
+        t = ParseThread(self.__make_resume_sheets, (v, "resume", REPORT_PATH + prefix_name + RESUME_REPORT),
+                        "resume")
+        threads.append(t)
 
         # 进程启动
         v = results.get("proc")
@@ -190,20 +193,23 @@ class EventLog:
         # 亮屏解锁的数据
         v = results.get("screen")
         t = ParseThread(self.__make_screen_sheets, (results, REPORT_PATH + prefix_name + SCREEN_REPORT), "screen")
+        threads.append(t)
 
         # 内存变化数据
         v = results.get("pss")
         t = ParseThread(self.__make_pss_sheets, (v, REPORT_PATH + prefix_name + PSS_REPORT), "pss")
+        threads.append(t)
 
         # 杀进程的数据
         v = results.get("kill")
         t = ParseThread(self.__make_kill_sheets, (v, REPORT_PATH + prefix_name + KILL_REPORT), "kill")
+        threads.append(t)
 
         #  内存的数据
         v = results.get("mem")
         t = ParseThread(self.__make_mem_sheets, (v, REPORT_PATH + prefix_name + MEM_REPORT), "mem")
-
         threads.append(t)
+
         self.threads_run(threads)
 
         # self.__make_resume_sheets(v, "resume")
@@ -213,6 +219,21 @@ class EventLog:
         time0 = mem_result.get("time")
         cached = mem_result.get("cached")
         free = mem_result.get("free")
+        # df = DataFrame(mem_result)
+        # df['cached_free'] = (df['cached'].astype(np.int64)+df['free'].astype(np.int64))/MB
+        # print(df.head())
+        # X = [x for x in range(len(df['time']))]
+        # # x_label = [v for v in range(24)]
+        # plt.scatter(X, df['cached_free'])
+        # plt.xlabel('time')
+        # plt.ylabel('Frre_men')
+        # # plt.yticks()
+        # plt.minorticks_off()
+        # # plt.xticks(X, x_label)
+        # plt.xticks(X, df['time'])
+        # # plt.scatter(X, df['cached_free'])
+        # plt.show()
+
         count = []
         for x1, x2, x3 in zip(time0, cached, free):
             k = x1
@@ -221,25 +242,27 @@ class EventLog:
         # print(sorted(count))
         count.sort()
         wb = xlsxwriter.Workbook(xlsx_name)
-        date_format = wb.add_format({'num_format': 'hh:mm:ss'})
-        sheet = wb.add_worksheet("mem_spread")
+        date_format = wb.add_format({'num_format': 'hh:mm'})
+        sheet_name = "FreeMem_spread"
+        sheet = wb.add_worksheet(sheet_name)
         chart = wb.add_chart({'type': 'scatter'})
         # sheet.write(0, 0, "time")
         # sheet.write(1, 0, "Free_Mem")
         length = len(count)
         for x in range(length):
-            # sheet.write_row(0,)
-            # sheet.write_datetime
-            # print("")
-            temp = datetime.datetime.strptime(count[x][0], '%H:%M:%S')
-            print(temp)
+            # print(count[x][0][0:5])
+            temp = datetime.datetime.strptime(count[x][0][0:5], '%H:%M')
+            # print(temp)
             sheet.write_datetime(0, x, temp, date_format)
             sheet.write(1, x, count[x][1])
 
         chart.add_series({
-            'categories': ["mem_spread", 0, 0, 0, length],
-            'values': ["mem_spread", 1, 0, 1, length],
-            # 'marker': {'type': 'diamond'},
+            'categories': [sheet_name, 0, 0, 0, length],
+            'values': [sheet_name, 1, 0, 1, length],
+            'marker': {
+                'type': 'circle',
+                # 'fill': {'color': 'red'},
+                },
         })
 
         chart.set_title({
@@ -251,8 +274,9 @@ class EventLog:
 
         chart.set_x_axis({
             'date_axis': True,
-            'min': datetime.time(0, 0, 0),
-            'max': datetime.time(23, 59, 59),
+            # 'time_axis': True,
+            'min': datetime.time(0),
+            'max': datetime.time(23, 59),
             'name': "Time",
             'name_font': {
                 'name': 'Courier New',
@@ -262,11 +286,18 @@ class EventLog:
                 'name': 'Arial',
                 'color': '#00B0F0',
             },
-            'minor_unit': 1,
-            'minor_unit_type': 'minutes',
-            'major_unit': 1,
-            'major_unit_type': 'hours',
-            # 'num_format': ':%M:%S',
+
+            # 'minor_unit': 60,
+            # 'minor_unit_type': 'minutes',
+            # 'major_unit': 24,
+            # 'major_unit_type': 'hours',
+            # 'num_format': 'dd/mm/yy hh:mm:ss',
+            # 'interval_unit': 24,
+            'num_format': 'hh:mm',
+            'major_gridlines': {
+                'visible': True,
+                'line': {'width': 1.25, 'dash_type': 'dash'}
+            },
         })
 
         chart.set_y_axis({
@@ -289,10 +320,10 @@ class EventLog:
         # print(count)
         sheet.insert_chart(4, 0, chart)
         wb.close()
-        pass
+        # pass
 
     def __make_kill_sheets(self, kill_result, xlsx_name):
-        print(kill_result)
+        # print(kill_result)
         sort_list = sorted(kill_result.items(), key=lambda d: d[1], reverse=True)
         wb = xlsxwriter.Workbook(xlsx_name)
         sheet = wb.add_worksheet("kill")
@@ -306,7 +337,7 @@ class EventLog:
 
     def __make_pss_sheets(self, pss_list, xlsx_name):
         pss = sorted(pss_list.items(), key=lambda d: d[0])
-        print(pss)
+        # print(pss)
         wb = xlsxwriter.Workbook(xlsx_name)
         # pss_mb = [i/MB for i in pss[1][0]]
         # i = 0
@@ -317,19 +348,19 @@ class EventLog:
         #     # for j in range(len(pss_mb)):
         #     sheet.write(i, 1, avg)
         #     i += 1
-        list_arr = [100, 200, 300, 400, 500, 1000]
+        list_arr = [50, 100, 200, 300, 400, 500, 1000]
         spread_dict = self.method_spread2(list_arr, pss)
         self.__make_proc_spread_sheet(wb, "pss_spread_sheet", spread_dict, self.generate_unit(list_arr))
         wb.close()
         # pass
 
     def method_spread2(self, list_arr, sort_list):
-        print(sort_list)
+        # print(sort_list)
         len1 = len(list_arr)
         spread_dict = {}
         for v in sort_list:
             process = v[0]
-            print(v)
+            # print(v)
             interval = [(float(i) / MB) for i in v[1][0]]
             arr = [i for i in np.array(interval)]
             avg = 0 if len(arr) == 0 else np.mean(arr)
@@ -402,7 +433,8 @@ class EventLog:
         for v in sort_list:
             process = v[0]
             interval = v[1][0]
-            arr = [float(i) for i in np.array(interval) if i < 100]
+            # arr = [float(i) for i in np.array(interval) if i < 100]
+            arr = [float(i) for i in np.array(interval)]
             avg = 0 if len(arr) == 0 else np.mean(arr)
             # avg = np.mean(arr)
             values = [0] * (len1 + 1)
@@ -437,7 +469,7 @@ class EventLog:
         # print(keys)
         len1 = len(keys)
         sheet.write(0, 0, "PROC_NAME")
-        sheet.write(0, len1 + 1, "AVEG")
+        sheet.write(0, len1 + 1, "AVEG(M/ms)")
         for x in range(0, len1):
             sheet.write(0, x + 1, keys[x])
         sorted_list = sorted(sort_list.items(), key=lambda d: d[0])
@@ -732,7 +764,8 @@ if __name__ == '__main__':
     start = time.time()
     print("parse start at ...")
     # eventlog = EventLog(DIR, "PD1610")
-    eventlog = EventLog(DIR2, "test")
+    eventlog = EventLog(DIR3, "PD1619")
+    # eventlog = EventLog(DIR2, "test")
     eventlog.parse()
     # EventLog("D:/log/eventlog/PD1619/", "PD1619").parse()
     end = time.time() - start

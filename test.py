@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # coding:utf-8
 import datetime
-import os
 
 from utils.config_utils import ConfigUtils
 
@@ -11,8 +10,6 @@ caseMaps, appMaps, deviceMaps = ConfigUtils.readConfig()
 time_stamp = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
 time_stamp2 = datetime.datetime.now().strftime("%Y-%m-%d")
 # coding:utf-8
-
-import numpy as np
 
 # from numpy import *
 
@@ -116,6 +113,7 @@ print("===anr end ===")
 
 # np.mean()
 import re
+
 PSS_PATTERN = r"(.*)\s+\d+\s+\d+ I am_pss  : \[\d+,\d+,([^,]+),(\d+),(\d+)(,\d+)?\]"
 s = "06-05 17:21:16.107  3093  3629 I am_pss  : [10303,10063,com.iqoo.secure,9591808,6098944,0]"
 s2 = "07-03 09:49:02.470  1319  1341 I am_pss  : [28230,10144,com.tencent.androidqqmail,43467776,38531072]"
@@ -168,6 +166,44 @@ s3 = "06-05 17:20:41.243  3093  4830 I am_kill : [0,7680,com.volte.config,906,em
 # d.get('a').append(1)
 # print(d)
 
-li=[(2,'a'),(4,'b'),(1,'d')]
-li.sort()
-print(li)
+# li=[(2,'a'),(4,'b'),(1,'d')]
+# li.sort()
+# print(li)
+
+# ANR_PATTERN = "(.*)\s+\d+\s+\d+ I am_anr\s+:\s+\[(\d+,){2}(.*),\d+,.*\]"
+# line = "06-05 22:53:40.279  3093  3632 I am_anr  : [0,26110,com.tencent.mm,951598660,Broadcast of Intent { act=com.tencent.mm.plugin.report.service.KVCommCrossProcessReceiver flg=0x10 cmp=com.tencent.mm/.plugin.report.service.KVCommCrossProcessReceiver (has extras) }]"
+# match_anr = re.search(ANR_PATTERN, line)
+# if match_anr:
+#     print("1111")
+#     time = match_anr.group(1)
+#     time = time[6:-5]
+#     pkgname = match_anr.group(3)
+#     print(pkgname)
+import matplotlib.pyplot as plt
+import pandas
+import numpy as np
+from pandas import DataFrame,Series
+print(np.random.randn(1000).cumsum())
+# fig = plt.figure()
+# ax1 = fig.add_subplot(2, 2, 1)
+# ax2 = fig.add_subplot(2, 2, 2)
+# ax3 = fig.add_subplot(2,2,3)
+#
+# # _ = ax1.hist(randn(100), bins=20, color='k')
+# ax2.scatter(np.arange(30),np.arange(30) * randn(30))
+# plt.plot(randn(50).cumsum(), 'g', '-o')
+# # plt.plot
+# # plt.subplots(2, 3)
+# plt.show()
+# plt.plot(randn(50).cumsum(),'k--')
+# df = pandas.DataFrame({"var1": [1, 2, 3, 4, 5, 6], "var2": [1, 2, 3, 4, 5, 6]})
+# plt.plot(df["var1"], df["var2"], linestyle='--', marker='o', color='r')
+# plt.xticks([x for x in range(10)])
+# plt.xlim([0, 10])
+# plt.ylim([0, 10])
+# plt.legend(loc="best")
+# # plt.text
+# plt.show()
+
+df = DataFrame(np.random.randn(10,4).cumsum(0),columns=['A','B','C','D'],index=np.arange(0,100,10))
+# df.plot().show()

@@ -9,7 +9,7 @@ RESUME_PATTERN = r"(.*)\s+\d+\s+\d+ I am_resume_activity: \[(\d+,){3}(.*)/(.*)\]
 FOCUSED_PATTERN = r".* am_focused_activity: \[\d+,(.*)/.*\]"
 # 异常相关
 CRASH_PATTERN = r"(.*)\s+\d+\s+\d+ I am_crash: \[(\d+,){2}(.*),\d+,.*\]"
-ANR_PATTERN = "(.*)\s+\d+\s+\d+ I am_anr: \[(\d+,){2}(.*),\d+,.*\]"
+ANR_PATTERN = "(.*)\s+\d+\s+\d+ I am_anr\s+:\s+\[(\d+,){2}(.*),\d+,.*\]"
 
 SCREEN_PATTERN = "(.*)\s+\d+\s+\d+ I screen_toggled: (\d+)"
 # 进程启动相关
@@ -61,7 +61,7 @@ class MemParser(Parser):
             zram = match_mem.group(4)
             kernel = match_mem.group(5)
             native = match_mem.group(6)
-            print(time, cached, free, zram, kernel, native)
+            # print(time, cached, free, zram, kernel, native)
 
             temp_mem.get("time").append(time)
             temp_mem.get("cached").append(cached)
@@ -150,6 +150,7 @@ class AnrParser(Parser):
     def parse(self, line, temp_anr):
         match_anr = re.search(ANR_PATTERN, line)
         if match_anr:
+            # print("1111")
             time = match_anr.group(1)
             time = time[6:-5]
             pkgname = match_anr.group(3)

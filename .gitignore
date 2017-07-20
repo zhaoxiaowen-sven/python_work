@@ -6,3 +6,4 @@ report
 .event_log
 .idea/
 *.pyc
+event_report/
