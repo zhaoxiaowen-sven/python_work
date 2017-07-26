@@ -231,12 +231,10 @@ class EventLog:
         # 进程启动时间和内存状态
         # self.make_launch_sheets(results, "111")
 
-        # 
+        # app resume time 的时间序列包括灭屏的
         app_results = DataFrame(results.get("resume3")).append(DataFrame(results.get("resume4")))
-        
         # 应用的使用时长
         self.make_app_use_time_sheet(app_results)
-
         # 应用的切换
         self.make_next_app_sheet(app_results)
 
@@ -250,7 +248,9 @@ class EventLog:
         # 直接跳转到微信，再移动1次 计算
         data['third_pkg'] = data['pkg'].shift(-2)
 
-        #  计算下一个应用 pkg
+        # 计算下一个应用 pkg
+        # 第2次跳转是桌面com.bbk.launcher2 或者近期任务栏 com.vivo.upslide.recents.RecentsActivity
+
         l = ['com.bbk.launcher2', 'com.vivo.upslide.recents.RecentsActivity']
         writer_to = pd.ExcelWriter("csv_record/to.xlsx")
         uniquepkg = data['pkg'].unique()
@@ -268,16 +268,11 @@ class EventLog:
             to_data1.to_excel(writer_to, sheet_name=str(p))
 
         writer_from = pd.ExcelWriter("csv_record/from.xlsx")
-
         for p in uniquepkg:
             from_data1 = pd.value_counts(data[data['next_pkg'] == p]['pkg'], ascending=False)
             from_data1.to_excel(writer_from, sheet_name=str(p) if len(str(p)) < 32 else str(p)[:32])
 
-            # 第2次跳转是桌面com.bbk.launcher2 或者近期任务栏 com.vivo.upslide.recents.RecentsActivity
-
-        # df5 = pd.value_counts(df_resume3[df_resume3['pkg'] == "com.tencent.mm"]['third_pkg'])
-        # 下一个启动的应用 end
-        pass
+            # pass
 
     # 应用的使用时长
     def make_app_use_time_sheet(self, results):

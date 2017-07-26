@@ -9,3 +9,4 @@ report
 event_report/
 csv_record/
 event/events_log
+*.log

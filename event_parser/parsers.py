@@ -72,7 +72,7 @@ class LauncherParser(Parser):
             temp_launch.get("start").append(start)
             temp_launch.get("total").append(total)
 
-        # pass
+            # pass
 
 
 class BatteryParser(Parser):
@@ -90,7 +90,6 @@ class BatteryParser(Parser):
             temp_battery.get("level").append(level)
             temp_battery.get("voltage").append(voltage)
             temp_battery.get("T").append(T)
-
 
 
 class MemParser(Parser):
@@ -115,7 +114,8 @@ class MemParser(Parser):
             temp_mem.get("kernel").append(kernel)
             temp_mem.get("native").append(native)
 
-    # pass
+            # pass
+
 
 class KillParser(Parser):
     def parse(self, line, temp_kill):
@@ -199,7 +199,7 @@ class ResumeParser(Parser):
                         time2 = match_resume2.group(1)
                         ui = match_resume2.group(2)
 
-                        if ui == pkgname+activity:
+                        if ui == pkgname + activity:
                             interval = self.comparetime(time, time2)
                             # print(ui, interval)
                             temp2["time"].append(time)
