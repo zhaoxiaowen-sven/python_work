@@ -6,6 +6,7 @@ from dateutil.parser import parse
 
 # 用户行为相关
 RESUME_PATTERN = r"(.*)\s+\d+\s+\d+ I am_resume_activity: \[(\d+,){3}(.*)/(.*)\]"
+RESUME_CALLED_PATTERN = r"(.*)\s+\d+\s+\d+ I am_on_resume_called: \[\d,(.*)\]"
 FOCUSED_PATTERN = r".* am_focused_activity: \[\d+,(.*)/.*\]"
 # 异常相关
 CRASH_PATTERN = r"(.*)\s+\d+\s+\d+ I am_crash: \[(\d+,){2}(.*),\d+,.*\]"
@@ -21,6 +22,12 @@ MEM_PATTERN = r"(.*)\s+\d+\s+\d+ I am_meminfo: \[(\d+),(\d+),(\d+),(\d+),(\d+)\]
 
 # 杀进程相关
 KILL_PATTERN = r"(.*)\s+\d+\s+\d+ I am_kill : \[\d+,\d+,([^,]+),(\d+),.*\]"
+
+# 电池电量
+BATTERY_PATTERN = r'(.*)\s+\d+\s+\d+ I battery_level: \[(\d+),(\d+),(\d+)\]'
+
+# 启动的时间
+LAUNCH_PATTERN = r'(.*)\s+\d+\s+\d+ I am_activity_launch_time:\s+\[\d+,\d+,(.*),(\d+),(\d+)\]'
 
 BBK_LANUCHER = "com.bbk.launcher2"
 
@@ -49,12 +56,50 @@ class Parser(object):
                 break
         return flag
 
+
+class LauncherParser(Parser):
+    def parse(self, line, temp_launch):
+        match_launch = re.search(LAUNCH_PATTERN, line)
+        if match_launch:
+            time = match_launch.group(1).strip()
+            ui = match_launch.group(2)
+            start = match_launch.group(3)
+            total = match_launch.group(4)
+            # print(time, ui, start, total)
+
+            temp_launch.get("time").append(time)
+            temp_launch.get("ui").append(ui)
+            temp_launch.get("start").append(start)
+            temp_launch.get("total").append(total)
+
+        # pass
+
+
+class BatteryParser(Parser):
+    def parse(self, line, temp_battery):
+        match_battery = re.search(BATTERY_PATTERN, line)
+        if match_battery:
+            time = match_battery.group(1).strip()
+            level = match_battery.group(2)
+            voltage = match_battery.group(3)
+            T = match_battery.group(4)
+
+            # print(time, level, voltage, T)
+
+            temp_battery.get("time").append(time)
+            temp_battery.get("level").append(level)
+            temp_battery.get("voltage").append(voltage)
+            temp_battery.get("T").append(T)
+
+
+
 class MemParser(Parser):
     def parse(self, line, temp_mem):
         match_mem = re.search(MEM_PATTERN, line)
         if match_mem:
-            time = match_mem.group(1)
-            time = time[6:-5]
+            time = match_mem.group(1).strip()
+            # 修改之后可能有bug，原始数据最好不要修改，处理的时候再修改
+            # time = time[6:-5]
 
             cached = match_mem.group(2)
             free = match_mem.group(3)
@@ -118,19 +163,21 @@ class PssParser(Parser):
 
 
 class ResumeParser(Parser):
-    def parse(self, line, temp_resume):
+    def parse(self, line, temp_resume, point, lines, temp2, temp3):
         match_resume = re.search(RESUME_PATTERN, line)
         if match_resume:
-            time = match_resume.group(1)
+            time = match_resume.group(1).strip()
             # print("time", time)
-            time = time[6:-5]
+            # time_special = time[6:-5]
             # print("time", time)
             pkgname = match_resume.group(3)
             activity = match_resume.group(4)
-            if pkgname not in top10app:
-                return
-            if pkgname == BBK_LANUCHER:
-                return
+            # if pkgname not in top10app:
+            #     return
+            # if pkgname == BBK_LANUCHER:
+            #     return
+            temp3['pkg'].append(pkgname)
+            temp3['time'].append(time)
             if pkgname in temp_resume.keys():
                 v = temp_resume.get(pkgname)
                 v[0] += 1
@@ -144,6 +191,27 @@ class ResumeParser(Parser):
                 temp_resume[pkgname] = v
             else:
                 temp_resume[pkgname] = [1, {activity: 1}, [time]]
+            # 计算resume -> resume_called 的时间
+            for x in range(10):
+                if point + x < len(lines):
+                    match_resume2 = re.search(RESUME_CALLED_PATTERN, lines[point + x])
+                    if match_resume2:
+                        time2 = match_resume2.group(1)
+                        ui = match_resume2.group(2)
+
+                        if ui == pkgname+activity:
+                            interval = self.comparetime(time, time2)
+                            # print(ui, interval)
+                            temp2["time"].append(time)
+                            temp2["ui"].append(ui)
+                            temp2["interval"].append(interval)
+                            # if ui in temp2.keys():
+                            #     v = temp2.get(ui)
+                            #     v[0].append(time)
+                            #     v[1].append(interval)
+                            # else:
+                            #     temp2[ui] = [[time], ui [interval]]
+                            break
 
 
 class AnrParser(Parser):
@@ -181,12 +249,19 @@ class CrashParser(Parser):
 
 
 class ScreenParser(Parser):
-    def parse(self, length, line, lines, temp_screen, temp_screen_focused, x):
+    def parse(self, length, line, lines, temp_screen, temp_screen_focused, x, resume4):
         match_screen = re.search(SCREEN_PATTERN, line)
         if match_screen:
-            time = match_screen.group(1)
-            time = time[6:-5]
+
+            time = match_screen.group(1).strip()
+            # time = time[6:-5]
             state = match_screen.group(2).strip()
+
+            # 将亮灭屏的信息加入到resume 中，用户计算应用的使用时间
+            if int(state) == 0:
+                resume4['time'].append(time)
+                resume4['pkg'].append(state)
+
             if state in temp_screen.keys():
                 v = temp_screen.get(state)
                 v[0] += 1
@@ -225,9 +300,9 @@ class ProcParser(Parser):
         pidname1 = match_start.group(2)
         procname1 = match_start.group(3)
         #  去top10
-        flag = self.is_top10_process(procname1)
-        if not flag:
-            return
+        # flag = self.is_top10_process(procname1)
+        # if not flag:
+        #     return
 
         # 找到start_proc的地方,比较位置
         for j in range(1, 10):

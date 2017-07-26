@@ -183,7 +183,7 @@ import matplotlib.pyplot as plt
 import pandas
 import numpy as np
 from pandas import DataFrame,Series
-print(np.random.randn(1000).cumsum())
+# print(np.random.randn(1000).cumsum())
 # fig = plt.figure()
 # ax1 = fig.add_subplot(2, 2, 1)
 # ax2 = fig.add_subplot(2, 2, 2)
@@ -205,5 +205,48 @@ print(np.random.randn(1000).cumsum())
 # # plt.text
 # plt.show()
 
-df = DataFrame(np.random.randn(10,4).cumsum(0),columns=['A','B','C','D'],index=np.arange(0,100,10))
+# df = DataFrame(np.random.randn(10,4).cumsum(0),columns=['A','B','C','D'],index=np.arange(0,100,10))
 # df.plot().show()
+
+# 07-19 09:55:52.497  1449  2172 I battery_level: [95,4207,317]
+# BATTERY_PATTERN = r'(.*)\s+\d+\s+\d+ I battery_level: \[(\d+),(\d+),(\d+)\]'
+# line = "07-19 09:55:52.497  1449  2172 I battery_level: [95,4207,317]"
+# match_battery = re.search(BATTERY_PATTERN, line)
+# if match_battery:
+#     time = match_battery.group(1)
+#     level = match_battery.group(2)
+#     voltage = match_battery.group(3)
+#     T = match_battery.group(4)
+#
+#     print(time, level, voltage, T)
+
+# coding: utf-8
+# coding: utf-8
+
+# import matplotlib.pyplot as plt
+# import numpy as np
+#
+# y = np.random.randint(0,100,100)
+# X = [i for i in range(100)]
+#
+# X_ticks = []
+# for i in range(1,101):
+#     if i % 50==0 or i==100:
+#         X_ticks.append(str(i))
+#     else:
+#         X_ticks.append('')
+#
+# plt.xticks(X,X_ticks)
+# plt.plot(X,y,'r')
+#
+# plt.show()
+
+line = "11-02 16:12:32.620  1344  1512 I am_activity_launch_time: [0,111304510,com.bbk.appstore/.ui.AppStore,437,437]"
+pattern = r"(.*)\s+\d+\s+\d+ I am_activity_launch_time:\s+\[\d+,\d+,(.*),(\d+),(\d+)\]"
+match_obj = re.search(pattern, line)
+if match_obj:
+    time = match_obj.group(1)
+    ui = match_obj.group(2)
+    launch = match_obj.group(3)
+    total = match_obj.group(4)
+    print(time, ui, launch, total)

@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # coding:utf-8
+
 SCREEN_REPORT = "event_log_screen_results.xlsx"
 EXCEPT_REPORT = "event_log_except_results.xlsx"
 PROC_REPORT = "event_log_proc_results.xlsx"
@@ -7,22 +8,23 @@ RESUME_REPORT = "event_log_resume_results.xlsx"
 PSS_REPORT = "event_log_pss_results.xlsx"
 KILL_REPORT = "event_log_kill_results.xlsx"
 MEM_REPORT = "event_log_mem_results.xlsx"
+BATTERY_REPORT = "event_log_battery_results.xlsx"
 
 MB = 1024.0 * 1024.0
 
 __author = 'zhaoxiaowen'
+import datetime
 import os
 import threading
 import time
 from collections import Counter
-import datetime
+
+import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import xlsxwriter
 import xlsxwriter.utility as utility
-from pandas import DataFrame,Series
-import pandas as pd
-import matplotlib.pyplot as plt
-
+from pandas import DataFrame
 
 from event_parser.parsers import *
 
@@ -33,15 +35,6 @@ DIR2 = "E:/Project/Pycharm/ftp_work/event/"
 
 # DIR = "D:/log2/eventlog/862668030011416/"
 REPORT_PATH = "E:/Project/Pycharm/ftp_work/event_report/"
-
-RESUME_PATTERN = r"(.*)\s+\d+\s+\d+ I am_resume_activity: \[(\d+,){3}(.*)/(.*)\]"
-FOCUSED_PATTERN = r".* am_focused_activity: \[\d+,(.*)/.*\]"
-CRASH_PATTERN = r"(.*)\s+\d+\s+\d+ I am_crash: \[(\d+,){2}(.*),\d+,.*\]"
-ANR_PATTERN = "(.*)\s+\d+\s+\d+ I am_anr: \[(\d+,){2}(.*),\d+,.*\]"
-SCREEN_PATTERN = "(.*)\s+\d+\s+\d+ I screen_toggled: (\d+)"
-
-START_PATTERN = r"(.*)\s+\d+\s+\d+ I am_proc_start: \[(\d+,){3}(.*),(.*),.*\]"
-BOUND_PATTERN = r"(.*)\s+\d+\s+\d+ I am_proc_bound: \[(\d+,){2}(.*)\]"
 
 HOUR = 60 * 60 * 1000.0
 
@@ -80,11 +73,19 @@ class EventLog:
         return (parse(time2) - parse(time1)).total_seconds() * 1000
 
     def parse_files(self):
-        # result = {'resume': {}, 'focused': {}}
-        result = {'count_time': 0, 'resume': {}, 'crash': {}, 'anr': {}, 'screen': {}, "proc": {},
-                  "screen_focused": {"count": 1}, 'pss': {}, "kill": {},
-                  "mem": {"time": [], "cached": [], "free": [], "zram": [], "kernel": [], "native": []}
-                  }
+        results = {'count_time': 0,
+                   'resume': {},
+                   'resume2': {"time": [], "ui": [], "interval": []},
+                   'resume3': {"time": [], "pkg": []},
+                   'resume4': {"time": [], "pkg": []},
+                   'crash': {}, 'anr': {},
+                   'screen': {},
+                   "proc": {},
+                   "screen_focused": {"count": 1}, 'pss': {}, "kill": {},
+                   "mem": {"time": [], "cached": [], "free": [], "zram": [], "kernel": [], "native": []},
+                   "battery": {"time": [], "level": [], "voltage": [], "T": []},
+                   "launch": {"time": [], "ui": [], "start": [], "total": []}
+                   }
         filepaths = []
         for dirpath, dirnames, filenames in os.walk(self.path):
             for file in filenames:
@@ -92,17 +93,17 @@ class EventLog:
         # print(filepaths)
         for p in filepaths:
             print("======", p, "======")
-            self.parse_file(p, result)  # result[] = temp
+            self.parse_file(p, results)  # result[] = temp
 
-        return result
+        return results
 
     def parse_file(self, path, result):
         # temp_resume = result.get('resume')
         # temp_crash = result.get("crash")
         # temp_anr = result.get('anr')
         # temp_proc = result.get("proc")
-        temp_screen = result.get("screen")
-        temp_screen_focused = result.get("screen_focused")
+        # temp_screen = result.get("screen")
+        # temp_screen_focused = result.get("screen_focused")
         # temp_pss = result.get("pss")
         # count_time = result.get('count_time')
         # print("****", count_time)
@@ -127,33 +128,43 @@ class EventLog:
                 if line.find("am_resume_activity") != -1:  # resume的数据
                     # 06-09 21:46:53.637
                     # self.resume_parser(line, temp_resume)
-                    ResumeParser().parse(line, result.get('resume'))
-                    # pass
-                elif line.find("am_crash") != -1:
-                    # match_crash:  # crash 的信息
-                    # self.crashParser(line, temp_crash)
-                    CrashParser().parse(line, result.get("crash"))
-                    # pass
-                elif line.find("am_anr") != -1:
-                    # match_anr:  # anr的数据
-                    # self.anr_parser(line, temp_anr)
-                    AnrParser().parse(line, result.get('anr'))
+                    ResumeParser().parse(line, result.get('resume'), x, lines, result.get('resume2'),
+                                         result.get('resume3'))
+
+                    pass
+                # elif line.find("am_crash") != -1:
+                #     # match_crash:  # crash 的信息
+                #     # self.crashParser(line, temp_crash)
+                #     CrashParser().parse(line, result.get("crash"))
+                #     # pass
+                # elif line.find("am_anr") != -1:
+                #     # match_anr:  # anr的数据
+                #     # self.anr_parser(line, temp_anr)
+                #     AnrParser().parse(line, result.get('anr'))
                 elif line.find("screen_toggled") != -1:
-                    ScreenParser().parse(length, line, lines, temp_screen, temp_screen_focused, x)
-                    # pass
+                    ScreenParser().parse(length, line, lines, result.get("screen"), result.get("screen_focused"), x,
+                                         result.get("resume4"))
+                    pass
                 elif line.find("proc_start") != -1:
                     # self.proc_parser(length, line, lines, temp_proc, x)
                     ProcParser().parse(length, line, lines, result.get("proc"), x)
                     # pass
-                elif line.find("am_pss") != -1:
-                    # print("am_pss")
-                    PssParser().parse(line, result.get("pss"))
-                    # pass
-                elif line.find("am_kill") != -1:
-                    KillParser().parse(line, result.get('kill'))
-
+                # elif line.find("am_pss") != -1:
+                #     # print("am_pss")
+                #     PssParser().parse(line, result.get("pss"))
+                #     # pass
+                # elif line.find("am_kill") != -1:
+                #     KillParser().parse(line, result.get('kill'))
+                #
                 elif line.find("am_meminfo") != -1:
                     MemParser().parse(line, result.get('mem'))
+
+                elif line.find("battery_level") != -1:
+                    BatteryParser().parse(line, result.get("battery"))
+
+                elif line.find("") != -1:
+                    LauncherParser().parse(line, result.get("launch"))
+
                 else:
                     pass
                     # continue
@@ -163,8 +174,8 @@ class EventLog:
     # 画图相关
     def make_sheets(self, results, prefix_name):
 
-        time = results.get("count_time")
-        print("统计时间总和 = " + str(time / HOUR) + " 小时")
+        time1 = results.get("count_time")
+        print("统计时间总和 = " + str(time1 / HOUR) + " 小时")
 
         threads = []
         # for k, v in results.iteritems():
@@ -180,64 +191,177 @@ class EventLog:
         t = ParseThread(self.__make_resume_sheets, (v, "resume", REPORT_PATH + prefix_name + RESUME_REPORT),
                         "resume")
         threads.append(t)
+        #
+        # # 进程启动
+        # v = results.get("proc")
+        # t = ParseThread(self.__make_proc_sheets, (v, REPORT_PATH + prefix_name + PROC_REPORT), "proc")
+        # threads.append(t)
+        #
+        # # 异常数据 anr crash
+        # t = ParseThread(self.__make_except_sheets, (results, REPORT_PATH + prefix_name + EXCEPT_REPORT), "except")
+        # threads.append(t)
+        #
+        # # 亮屏解锁的数据
+        # v = results.get("screen")
+        # t = ParseThread(self.__make_screen_sheets, (results, REPORT_PATH + prefix_name + SCREEN_REPORT), "screen")
+        # threads.append(t)
+        #
+        # # 内存变化数据
+        # v = results.get("pss")
+        # t = ParseThread(self.__make_pss_sheets, (v, REPORT_PATH + prefix_name + PSS_REPORT), "pss")
+        # threads.append(t)
+        #
+        # # 杀进程的数据
+        # v = results.get("kill")
+        # t = ParseThread(self.__make_kill_sheets, (v, REPORT_PATH + prefix_name + KILL_REPORT), "kill")
+        # threads.append(t)
+        #
+        # #  内存的数据
+        # v = results.get("mem")
+        # t = ParseThread(self.__make_mem_sheets, (v, REPORT_PATH + prefix_name + MEM_REPORT), "mem")
+        # threads.append(t)
 
-        # 进程启动
-        v = results.get("proc")
-        t = ParseThread(self.__make_proc_sheets, (v, REPORT_PATH + prefix_name + PROC_REPORT), "proc")
-        threads.append(t)
-
-        # 异常数据 anr crash
-        t = ParseThread(self.__make_except_sheets, (results, REPORT_PATH + prefix_name + EXCEPT_REPORT), "except")
-        threads.append(t)
-
-        # 亮屏解锁的数据
-        v = results.get("screen")
-        t = ParseThread(self.__make_screen_sheets, (results, REPORT_PATH + prefix_name + SCREEN_REPORT), "screen")
-        threads.append(t)
-
-        # 内存变化数据
-        v = results.get("pss")
-        t = ParseThread(self.__make_pss_sheets, (v, REPORT_PATH + prefix_name + PSS_REPORT), "pss")
-        threads.append(t)
-
-        # 杀进程的数据
-        v = results.get("kill")
-        t = ParseThread(self.__make_kill_sheets, (v, REPORT_PATH + prefix_name + KILL_REPORT), "kill")
-        threads.append(t)
-
-        #  内存的数据
-        v = results.get("mem")
-        t = ParseThread(self.__make_mem_sheets, (v, REPORT_PATH + prefix_name + MEM_REPORT), "mem")
-        threads.append(t)
-
+        # 电池的数据
+        # v = results.get("battery")
+        # print(v)
+        # t = ParseThread(self.__make_battery_sheets, (v, REPORT_PATH + prefix_name + BATTERY_REPORT), "battery")
+        # threads.append(t)
         self.threads_run(threads)
 
-        # self.__make_resume_sheets(v, "resume")
-        #
+        # 进程启动时间和内存状态
+        # self.make_launch_sheets(results, "111")
+
+        # 
+        app_results = DataFrame(results.get("resume3")).append(DataFrame(results.get("resume4")))
+        
+        # 应用的使用时长
+        self.make_app_use_time_sheet(app_results)
+
+        # 应用的切换
+        self.make_next_app_sheet(app_results)
+
+    def make_next_app_sheet(self, results):
+        # 应用的跳转关系
+        # 移动一次计算
+        data = results.set_index("time").sort_index()
+        # data = DataFrame(results.get("resume3")).set_index("time").sort_index()
+        # 微信直接跳转过去的应用
+        data['next_pkg'] = data['pkg'].shift(-1)
+        # 直接跳转到微信，再移动1次 计算
+        data['third_pkg'] = data['pkg'].shift(-2)
+
+        #  计算下一个应用 pkg
+        l = ['com.bbk.launcher2', 'com.vivo.upslide.recents.RecentsActivity']
+        writer_to = pd.ExcelWriter("csv_record/to.xlsx")
+        uniquepkg = data['pkg'].unique()
+        # for p in uniquepkg:
+        #     # to_data1 = pd.value_counts(data[(data['pkg'] == p) & (~data['next_pkg'].isin(l))]['next_pkg'])
+        #     # to_data2 = pd.value_counts(data[(data['pkg'] == p) & (data['next_pkg'].isin(l))]['third_pkg'])
+        #     data_all = DataFrame(to_data1).join(DataFrame(to_data2), how="outer").fillna(0)
+        #     data_all['all'] = data_all['next_pkg']+data_all['third_pkg']
+        #     data_all = data_all.sort_values("all", ascending=False)
+        #     # print(data_all)
+        #     data_all.to_excel(writer_to, sheet_name=str(p))
+        for p in uniquepkg:
+            to_data1 = pd.value_counts(data[data['pkg'] == p]['next_pkg'], ascending=False)
+            # print(DataFrame(to_data1))
+            to_data1.to_excel(writer_to, sheet_name=str(p))
+
+        writer_from = pd.ExcelWriter("csv_record/from.xlsx")
+
+        for p in uniquepkg:
+            from_data1 = pd.value_counts(data[data['next_pkg'] == p]['pkg'], ascending=False)
+            from_data1.to_excel(writer_from, sheet_name=str(p) if len(str(p)) < 32 else str(p)[:32])
+
+            # 第2次跳转是桌面com.bbk.launcher2 或者近期任务栏 com.vivo.upslide.recents.RecentsActivity
+
+        # df5 = pd.value_counts(df_resume3[df_resume3['pkg'] == "com.tencent.mm"]['third_pkg'])
+        # 下一个启动的应用 end
+        pass
+
+    # 应用的使用时长
+    def make_app_use_time_sheet(self, results):
+        # com.tencent.tmgp.sgame
+        # 应用的时长关系
+        df_all = results.sort_values("time")  # .sort_index()
+        # df_all = pd.merge(df_resume3, df_resume4, how="outer", on="time")
+        df_all['next_time'] = df_all["time"].shift(-1)
+        f1 = "%m-%d %H:%M:%S.%f"
+        df_all['timex'] = pd.to_datetime(df_all['next_time'], format=f1) - pd.to_datetime(df_all['time'], format=f1)
+        unique_pkg = df_all['pkg']
+        d = {}
+        for p in unique_pkg:
+            wx1 = df_all[df_all['pkg'] == p]
+            d[p] = wx1.timex.sum()
+        # print(d.values(), d.keys())
+        df_final = DataFrame(data=list(d.values()), columns=["time"], index=list(d.keys())).sort_values(by=['time'],
+                                                                                                        ascending=False)
+        df_final['minutes'] = [x.total_seconds() / 60.0 for x in df_final.time]
+        w = pd.ExcelWriter("csv_record/fgtime.xlsx")
+        df_final.to_excel(w)
+
+    # 启动时间和内存关系
+    def make_launch_sheets(self, results):
+        # results.get("launch")
+        df_launch = DataFrame(results.get("launch")).set_index("time").sort_index()
+        df_launch.to_csv("csv_record/launch.csv")
+
+        df_mem = DataFrame(results.get("mem")).set_index("time").sort_index()
+        df_mem["free_cached"] = (df_mem["free"].astype(np.float64) + df_mem["cached"].astype(np.float64)) / MB
+
+        df_resume2 = DataFrame(results.get("resume2")).set_index("time").sort_index()
+        df_resume2.to_csv("csv_record/resume.csv")
+
+        # print(df_resume2)
+        # print(df_launch)
+        # print(df_mem)
+
+        x1 = [parse(item) for item in df_resume2.index]
+        x2 = [parse(item) for item in df_mem.index]
+        x3 = [parse(item) for item in df_launch.index]
+
+        x_time = pd.date_range(datetime.datetime.date(x1[0]), periods=24, freq='H')
+        plt.xticks(x_time, [x for x in range(24)])
+
+        plt.plot(x2, df_mem["free_cached"], "b-", label="mem")
+        plt.plot(x1, df_resume2["interval"], "r-", label="resume_time")
+        plt.plot(x3, df_launch["start"], "y-", label="launch_time")
+
+        plt.xlabel("time")
+        plt.ylabel("MB/ms ")
+
+        plt.legend(loc="best")
+        plt.show()
+        # pass
+
+    def __make_battery_sheets(self, battery, xlsx_name):
+        print("__make_battery_sheets")
+        df = DataFrame(battery)
+        df2 = df.set_index(['time'])
+        df2.to_csv("csv_record/battery.csv")
+        # fig = plt.figure()
+        # ax0 = fig.add_subplot(131)
+        # 　时间字符串转化为时间戳
+        time_line = [parse(item) for item in df2.index]
+        x_time = pd.date_range(datetime.datetime.date(time_line[0]), periods=24, freq='H')
+
+        plt.plot(time_line, df2['level'].astype(np.int32), 'r--', label="level")
+        plt.plot(time_line, [item / 10.0 for item in df2['T'].astype(np.int32)], 'b', label="temperature")
+        plt.xticks(x_time, [x for x in range(24)])
+        plt.xlabel('time')
+        # plt.legend([p1, p2], ['level,temperature'])
+        plt.legend(loc="best")
+        plt.show()
+        # pass
 
     def __make_mem_sheets(self, mem_result, xlsx_name):
         time0 = mem_result.get("time")
         cached = mem_result.get("cached")
         free = mem_result.get("free")
-        # df = DataFrame(mem_result)
-        # df['cached_free'] = (df['cached'].astype(np.int64)+df['free'].astype(np.int64))/MB
-        # print(df.head())
-        # X = [x for x in range(len(df['time']))]
-        # # x_label = [v for v in range(24)]
-        # plt.scatter(X, df['cached_free'])
-        # plt.xlabel('time')
-        # plt.ylabel('Frre_men')
-        # # plt.yticks()
-        # plt.minorticks_off()
-        # # plt.xticks(X, x_label)
-        # plt.xticks(X, df['time'])
-        # # plt.scatter(X, df['cached_free'])
-        # plt.show()
-
         count = []
         for x1, x2, x3 in zip(time0, cached, free):
             k = x1
-            v = (float(x2)+float(x3))/MB
+            v = (float(x2) + float(x3)) / MB
             count.append((k, v))
         # print(sorted(count))
         count.sort()
@@ -262,7 +386,7 @@ class EventLog:
             'marker': {
                 'type': 'circle',
                 # 'fill': {'color': 'red'},
-                },
+            },
         })
 
         chart.set_title({
@@ -613,7 +737,8 @@ class EventLog:
             res = k[1][2]
             tmp = []
             for k0 in res:
-                tmp.append(k0[0:2])
+                # 11-02 16:11:57.160
+                tmp.append(k0[6:8])
             tmp_dict[k[0]] = dict(Counter(tmp))
         # print("tmp_dict", tmp_dict)
 
@@ -764,8 +889,8 @@ if __name__ == '__main__':
     start = time.time()
     print("parse start at ...")
     # eventlog = EventLog(DIR, "PD1610")
-    eventlog = EventLog(DIR3, "PD1619")
-    # eventlog = EventLog(DIR2, "test")
+    # eventlog = EventLog(DIR3, "PD1619")
+    eventlog = EventLog(DIR2, "test")
     eventlog.parse()
     # EventLog("D:/log/eventlog/PD1619/", "PD1619").parse()
     end = time.time() - start

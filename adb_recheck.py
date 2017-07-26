@@ -235,7 +235,6 @@ class Adb():
 if __name__ == "__main__":
     adb = Adb()
 
-
     def get_info(pkgname):
         pids = adb.get_pids(pkgname)
         print(u"=====应用各进程的pid=====")
