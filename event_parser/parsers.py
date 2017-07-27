@@ -293,48 +293,53 @@ class ScreenParser(Parser):
 
 
 class ProcParser(Parser):
-    def parse(self, length, line, lines, temp_proc, x):
+    def parse(self, length, line, lines, temp_proc, x, temp_proc_start):
         match_start = re.search(START_PATTERN, line)
         # start_proc 中提取出的信息
-        timestr1 = match_start.group(1).strip()
-        pidname1 = match_start.group(2)
-        procname1 = match_start.group(3)
-        #  去top10
-        # flag = self.is_top10_process(procname1)
-        # if not flag:
-        #     return
+        if match_start:
+            timestr1 = match_start.group(1).strip()
+            pidname1 = match_start.group(2)
+            procname1 = match_start.group(3)
+            #  去top10
+            # flag = self.is_top10_process(procname1)
+            # if not flag:
+            #     return
+            if procname1 in temp_proc_start:
+                temp_proc_start[procname1] += 1
+            else:
+                temp_proc_start[procname1] = 1
 
-        # 找到start_proc的地方,比较位置
-        for j in range(1, 10):
-            if x + j >= length:
-                break
-            line_bound = lines[x + j]
-            match_bound = re.search(BOUND_PATTERN, line_bound)
-            if match_bound:
-                # bound_proc 中提取出的信息
-                timestr2 = match_bound.group(1).strip()
-                pidname2 = match_bound.group(2)
-                procname2 = match_bound.group(3)
+            # 找到start_proc的地方,比较位置
+            for j in range(1, 10):
+                if x + j >= length:
+                    break
+                line_bound = lines[x + j]
+                match_bound = re.search(BOUND_PATTERN, line_bound)
+                if match_bound:
+                    # bound_proc 中提取出的信息
+                    timestr2 = match_bound.group(1).strip()
+                    pidname2 = match_bound.group(2)
+                    procname2 = match_bound.group(3)
 
-                # print('timestr2', timestr2, 'timestr1',timestr1)
-                # print('pidname1 = ', pidname1, 'pidname2 = ', pidname2)
-                if procname2 == procname1 and pidname1 == pidname2:  # and len(timestr1) == len(timestr2):
-                    # if procname2 == "com.android.bluetooth":
-                    # print "======", timestr1, timestr2
-                    try:
-                        tmp = self.comparetime(timestr1, timestr2)
-                        # if tmp > 100:
-                        #     break
-                        if procname2 in temp_proc.keys():
-                            l = temp_proc.get(procname2)
-                            l[1].append(timestr1)
-                            l[0].append(tmp)
-                        else:
-                            temp_proc[procname2] = [[tmp], [timestr1]]
+                    # print('timestr2', timestr2, 'timestr1',timestr1)
+                    # print('pidname1 = ', pidname1, 'pidname2 = ', pidname2)
+                    if procname2 == procname1 and pidname1 == pidname2:  # and len(timestr1) == len(timestr2):
+                        # if procname2 == "com.android.bluetooth":
+                        # print "======", timestr1, timestr2
+                        try:
+                            tmp = self.comparetime(timestr1, timestr2)
+                            # if tmp > 100:
+                            #     break
+                            if procname2 in temp_proc.keys():
+                                l = temp_proc.get(procname2)
+                                l[1].append(timestr1)
+                                l[0].append(tmp)
+                            else:
+                                temp_proc[procname2] = [[tmp], [timestr1]]
+                                break
+                        except Exception as e:
+                            print(e, procname2, timestr1, timestr2)
+                            # print line
+                            # print line2
+                            # flag = 1
                             break
-                    except Exception as e:
-                        print(e, procname2, timestr1, timestr2)
-                        # print line
-                        # print line2
-                        # flag = 1
-                        break

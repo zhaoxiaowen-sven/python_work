@@ -9,6 +9,11 @@ REPORT_DIR = "D:/PycharmProjects/untitled/report/"
 caseMaps, appMaps, deviceMaps = ConfigUtils.readConfig()
 time_stamp = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
 time_stamp2 = datetime.datetime.now().strftime("%Y-%m-%d")
+
+from pandas import DataFrame,Series
+import pandas as pd
+import numpy as np
+
 # coding:utf-8
 
 # from numpy import *
@@ -241,12 +246,29 @@ from pandas import DataFrame,Series
 #
 # plt.show()
 
-line = "11-02 16:12:32.620  1344  1512 I am_activity_launch_time: [0,111304510,com.bbk.appstore/.ui.AppStore,437,437]"
-pattern = r"(.*)\s+\d+\s+\d+ I am_activity_launch_time:\s+\[\d+,\d+,(.*),(\d+),(\d+)\]"
-match_obj = re.search(pattern, line)
-if match_obj:
-    time = match_obj.group(1)
-    ui = match_obj.group(2)
-    launch = match_obj.group(3)
-    total = match_obj.group(4)
-    print(time, ui, launch, total)
+# line = "11-02 16:12:32.620  1344  1512 I am_activity_launch_time: [0,111304510,com.bbk.appstore/.ui.AppStore,437,437]"
+# pattern = r"(.*)\s+\d+\s+\d+ I am_activity_launch_time:\s+\[\d+,\d+,(.*),(\d+),(\d+)\]"
+# match_obj = re.search(pattern, line)
+# if match_obj:
+#     time = match_obj.group(1)
+#     ui = match_obj.group(2)
+#     launch = match_obj.group(3)
+#     total = match_obj.group(4)
+#     print(time, ui, launch, total)
+
+
+import sqlite3
+conn = sqlite3.connect("resume.db")
+cur = conn.cursor()
+cur.execute('''
+    CREATE TABLE IF NOT EXISTS resume (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        imei text,
+        time text,
+        pkg text
+    )
+    ''')
+
+df = DataFrame(data=np.arange(12).reshape(4,3),columns=['imei', 'time', 'pkg'])
+print(df)
+df.to_sql("resume", conn, index=False, if_exists="append")

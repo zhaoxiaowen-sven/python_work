@@ -81,6 +81,7 @@ class EventLog:
                    'crash': {}, 'anr': {},
                    'screen': {},
                    "proc": {},
+                   "proc_start": {},
                    "screen_focused": {"count": 1}, 'pss': {}, "kill": {},
                    "mem": {"time": [], "cached": [], "free": [], "zram": [], "kernel": [], "native": []},
                    "battery": {"time": [], "level": [], "voltage": [], "T": []},
@@ -147,7 +148,7 @@ class EventLog:
                     pass
                 elif line.find("proc_start") != -1:
                     # self.proc_parser(length, line, lines, temp_proc, x)
-                    ProcParser().parse(length, line, lines, result.get("proc"), x)
+                    ProcParser().parse(length, line, lines, result.get("proc"), x, result.get("proc_start"))
                     # pass
                 # elif line.find("am_pss") != -1:
                 #     # print("am_pss")
@@ -188,43 +189,43 @@ class EventLog:
         v = results.get("resume")
         v = sorted(v.items(), key=lambda d: d[1][0], reverse=True)
         # print v
-        t = ParseThread(self.__make_resume_sheets, (v, "resume", REPORT_PATH + prefix_name + RESUME_REPORT),
+        t = ParseThread(self.make_resume_sheets, (v, "resume", REPORT_PATH + prefix_name + RESUME_REPORT),
                         "resume")
         threads.append(t)
         #
         # # 进程启动
         # v = results.get("proc")
-        # t = ParseThread(self.__make_proc_sheets, (v, REPORT_PATH + prefix_name + PROC_REPORT), "proc")
-        # threads.append(t)
+        t = ParseThread(self.make_proc_sheets, (results, REPORT_PATH + prefix_name + PROC_REPORT), "proc")
+        threads.append(t)
         #
         # # 异常数据 anr crash
-        # t = ParseThread(self.__make_except_sheets, (results, REPORT_PATH + prefix_name + EXCEPT_REPORT), "except")
+        # t = ParseThread(self.make_except_sheets, (results, REPORT_PATH + prefix_name + EXCEPT_REPORT), "except")
         # threads.append(t)
         #
         # # 亮屏解锁的数据
         # v = results.get("screen")
-        # t = ParseThread(self.__make_screen_sheets, (results, REPORT_PATH + prefix_name + SCREEN_REPORT), "screen")
+        # t = ParseThread(self.make_screen_sheets, (results, REPORT_PATH + prefix_name + SCREEN_REPORT), "screen")
         # threads.append(t)
         #
         # # 内存变化数据
         # v = results.get("pss")
-        # t = ParseThread(self.__make_pss_sheets, (v, REPORT_PATH + prefix_name + PSS_REPORT), "pss")
+        # t = ParseThread(self.make_pss_sheets, (v, REPORT_PATH + prefix_name + PSS_REPORT), "pss")
         # threads.append(t)
         #
         # # 杀进程的数据
         # v = results.get("kill")
-        # t = ParseThread(self.__make_kill_sheets, (v, REPORT_PATH + prefix_name + KILL_REPORT), "kill")
+        # t = ParseThread(self.make_kill_sheets, (v, REPORT_PATH + prefix_name + KILL_REPORT), "kill")
         # threads.append(t)
         #
         # #  内存的数据
         # v = results.get("mem")
-        # t = ParseThread(self.__make_mem_sheets, (v, REPORT_PATH + prefix_name + MEM_REPORT), "mem")
+        # t = ParseThread(self.make_mem_sheets, (v, REPORT_PATH + prefix_name + MEM_REPORT), "mem")
         # threads.append(t)
 
         # 电池的数据
         # v = results.get("battery")
         # print(v)
-        # t = ParseThread(self.__make_battery_sheets, (v, REPORT_PATH + prefix_name + BATTERY_REPORT), "battery")
+        # t = ParseThread(self.make_battery_sheets, (v, REPORT_PATH + prefix_name + BATTERY_REPORT), "battery")
         # threads.append(t)
         self.threads_run(threads)
 
@@ -233,6 +234,7 @@ class EventLog:
 
         # app resume time 的时间序列包括灭屏的
         app_results = DataFrame(results.get("resume3")).append(DataFrame(results.get("resume4")))
+
         # 应用的使用时长
         self.make_app_use_time_sheet(app_results)
         # 应用的切换
@@ -271,7 +273,6 @@ class EventLog:
         for p in uniquepkg:
             from_data1 = pd.value_counts(data[data['next_pkg'] == p]['pkg'], ascending=False)
             from_data1.to_excel(writer_from, sheet_name=str(p) if len(str(p)) < 32 else str(p)[:32])
-
             # pass
 
     # 应用的使用时长
@@ -349,7 +350,7 @@ class EventLog:
         plt.show()
         # pass
 
-    def __make_mem_sheets(self, mem_result, xlsx_name):
+    def make_mem_sheets(self, mem_result, xlsx_name):
         time0 = mem_result.get("time")
         cached = mem_result.get("cached")
         free = mem_result.get("free")
@@ -441,7 +442,7 @@ class EventLog:
         wb.close()
         # pass
 
-    def __make_kill_sheets(self, kill_result, xlsx_name):
+    def make_kill_sheets(self, kill_result, xlsx_name):
         # print(kill_result)
         sort_list = sorted(kill_result.items(), key=lambda d: d[1], reverse=True)
         wb = xlsxwriter.Workbook(xlsx_name)
@@ -454,7 +455,7 @@ class EventLog:
         wb.close()
         # pass
 
-    def __make_pss_sheets(self, pss_list, xlsx_name):
+    def make_pss_sheets(self, pss_list, xlsx_name):
         pss = sorted(pss_list.items(), key=lambda d: d[0])
         # print(pss)
         wb = xlsxwriter.Workbook(xlsx_name)
@@ -469,7 +470,7 @@ class EventLog:
         #     i += 1
         list_arr = [50, 100, 200, 300, 400, 500, 1000]
         spread_dict = self.method_spread2(list_arr, pss)
-        self.__make_proc_spread_sheet(wb, "pss_spread_sheet", spread_dict, self.generate_unit(list_arr))
+        self.make_proc_spread_sheet(wb, "pss_spread_sheet", spread_dict, self.generate_unit(list_arr))
         wb.close()
         # pass
 
@@ -495,16 +496,16 @@ class EventLog:
             spread_dict[process] = [values, avg]
         return spread_dict
 
-    def __make_screen_sheets(self, results, xlsx_name):
+    def make_screen_sheets(self, results, xlsx_name):
         print("__make_screen_sheets")
         wb = xlsxwriter.Workbook(xlsx_name)
         v = results.get("screen")
-        self.__make_screen_onoff_sheet(wb, v, "screen_onoff")
+        self.make_screen_onoff_sheet(wb, v, "screen_onoff")
         v = results.get("screen_focused")
-        self.__make_screen_focused_sheet(wb, v, "screen_focused")
+        self.make_screen_focused_sheet(wb, v, "screen_focused")
         wb.close()
 
-    def __make_screen_onoff_sheet(self, wb, sort_list, sheet_name):
+    def make_screen_onoff_sheet(self, wb, sort_list, sheet_name):
         print("__make_screen_onoff_sheet")
         screen_map = {'0': '灭屏', '1': "亮屏", '2': "指纹解锁"}
         sheet = wb.add_worksheet(sheet_name)
@@ -515,7 +516,7 @@ class EventLog:
             sheet.write(i, 1, v[0])
             i += 1
 
-    def __make_screen_focused_sheet(self, wb, sort_list, sheet_name):
+    def make_screen_focused_sheet(self, wb, sort_list, sheet_name):
         print("__make_screen_focused_sheet")
         sheet = wb.add_worksheet(sheet_name)
         count = sort_list.pop("count")
@@ -529,23 +530,33 @@ class EventLog:
             i += 1
 
     # 进程信息的表
-    def __make_proc_sheets(self, sort_dict, xlsx_name):
+    def make_proc_sheets(self, results, xlsx_name):
         print("__make_proc_sheets")
+        sort_dict = results.get("proc")
+        sort_start = results.get("proc_start")
         wb = xlsxwriter.Workbook(xlsx_name)
-        fmt = wb.add_format()
+
+        sheet = wb.add_worksheet("proc_start")
+        sort1 = sorted(sort_start.items(), key=lambda d: d[1], reverse=True)
+        for i in range(len(sort1)):
+            sheet.write(i, 0, sort1[i][0])
+            sheet.write(i, 1, sort1[i][1])
+
+        # fmt = wb.add_format()
         sort_list = sorted(sort_dict.items(), key=lambda d: d[0], reverse=False)
         # print("proc_list", sort_list)
 
         list_arr = [50, 100, 1000]
         spread_dict = self.method_spread(list_arr, sort_list)
         # print(spread_dict)
-        self.__make_proc_spread_sheet(wb, "spread_sheet", spread_dict, self.generate_unit(list_arr))
+        self.make_proc_spread_sheet(wb, "spread_sheet", spread_dict, self.generate_unit(list_arr))
         # self.__make_proc_main_sheet(wb, sort_list, fmt)
         # for k in sort_list:
         #     key = k[0].replace
         #     self.__make_proc_sub_sheet(wb, k[0], k[1][0])
         wb.close()
 
+    #
     def method_spread(self, list_arr, sort_list):
         len1 = len(list_arr)
         spread_dict = {}
@@ -583,7 +594,7 @@ class EventLog:
         keys.append('>' + str(list_arr[-1]))
         return keys
 
-    def __make_proc_spread_sheet(self, wb, sheet_name, sort_list, keys):
+    def make_proc_spread_sheet(self, wb, sheet_name, sort_list, keys):
         sheet = wb.add_worksheet(sheet_name)
         # print(keys)
         len1 = len(keys)
@@ -602,7 +613,7 @@ class EventLog:
                 sheet.write(i, x + 1, l[x])
             i += 1
 
-    def __make_proc_sub_sheet(self, wb, sheet_sub_name, sort_list):
+    def make_proc_sub_sheet(self, wb, sheet_sub_name, sort_list):
         sheet = wb.add_worksheet(sheet_sub_name)
         i = 1
         for k in sort_list:
@@ -613,7 +624,7 @@ class EventLog:
         sheet.insert_chart(i + 1, 0, chart)
         self.gen_chart_style(chart, i, sheet_sub_name, "Activity", "Times")
 
-    def __make_proc_main_sheet(self, wb, sort_list, fmt):
+    def make_proc_main_sheet(self, wb, sort_list, fmt):
         print("__make_proc_main_sheet")
         sheet = wb.add_worksheet("proc_main")
         i = 0
@@ -678,22 +689,22 @@ class EventLog:
         })
 
     # 异常数据的图表
-    def __make_except_sheets(self, results, xlsx_name):
+    def make_except_sheets(self, results, xlsx_name):
         # print("__make_exception_sheets")
         wb = xlsxwriter.Workbook(xlsx_name)
         # crash 的数据
         v = results.get("crash")
         v = sorted(v.items(), key=lambda d: d[1], reverse=True)
-        self.__make_except_sheet(v, wb, "crash")
+        self.make_except_sheet(v, wb, "crash")
 
         # anr 的数据
         v = results.get("anr")
         v = sorted(v.items(), key=lambda d: d[1], reverse=True)
-        self.__make_except_sheet(v, wb, "anr")
+        self.make_except_sheet(v, wb, "anr")
         wb.close()
 
     # 异常数据的子表
-    def __make_except_sheet(self, sort_list, wb, sheet_name):
+    def make_except_sheet(self, sort_list, wb, sheet_name):
         print("__make_exception_sheet")
         sheet = wb.add_worksheet(sheet_name)
         sheet.write(0, 0, "PkgName")
@@ -708,17 +719,17 @@ class EventLog:
         self.gen_chart_style(chart, i, sheet_name, "PkgName", "Times")
 
     # resume activity 的数据
-    def __make_resume_sheets(self, sorted_tuple, sheet_name, xlsx_name):
+    def make_resume_sheets(self, sorted_tuple, sheet_name, xlsx_name):
         wb = xlsxwriter.Workbook(xlsx_name)
         fmt = wb.add_format()
-        self.__make_main_sheet(sheet_name, sorted_tuple, wb, fmt)
-        self.__make_app_spread_sheet(wb, sorted_tuple, "app_resume_time_spread", fmt)
+        self.make_main_sheet(sheet_name, sorted_tuple, wb, fmt)
+        self.make_app_spread_sheet(wb, sorted_tuple, "app_resume_time_spread", fmt)
         for k in sorted_tuple:
             self.make_resume_sub_sheet(wb, k[0], k[1][1])
         wb.close()
 
     # resume activity 的时间分布
-    def __make_app_spread_sheet(self, wb, sorted_tuple, sheet_name, fmt):
+    def make_app_spread_sheet(self, wb, sorted_tuple, sheet_name, fmt):
         # d1 = {"00":0,"01":1}
         print("__make_app_spread_sheet")
         sheet = wb.add_worksheet(sheet_name)
@@ -751,7 +762,7 @@ class EventLog:
         sheet.insert_chart(25 + 1, 0, chart)
         self.gen_chart_style2(chart, tmp_dict, sheet_name, "Time", "Times")
 
-    def __make_main_sheet(self, sheet_name, sorted_tuple, wb, fmt):
+    def make_main_sheet(self, sheet_name, sorted_tuple, wb, fmt):
         sheet = wb.add_worksheet(sheet_name)
         sheet.write(0, 0, "PkgName")
         sheet.write(0, 1, "Times")

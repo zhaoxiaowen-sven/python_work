@@ -8,5 +8,5 @@ report
 *.pyc
 event_report/
 csv_record/
-event/events_log
+oneday/events_log
 *.log
