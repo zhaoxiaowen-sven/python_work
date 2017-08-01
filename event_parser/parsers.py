@@ -7,7 +7,7 @@ from dateutil.parser import parse
 # 用户行为相关
 RESUME_PATTERN = r"(.*)\s+\d+\s+\d+ I am_resume_activity: \[(\d+,){3}(.*)/(.*)\]"
 RESUME_CALLED_PATTERN = r"(.*)\s+\d+\s+\d+ I am_on_resume_called: \[\d,(.*)\]"
-FOCUSED_PATTERN = r".* am_focused_activity: \[\d+,(.*)/.*\]"
+FOCUSED_PATTERN = r"(.*)\s+\d+\s+\d+ I am_focused_activity: \[\d+,(.*)/(.*)\]"
 # 异常相关
 CRASH_PATTERN = r"(.*)\s+\d+\s+\d+ I am_crash: \[(\d+,){2}(.*),\d+,.*\]"
 ANR_PATTERN = "(.*)\s+\d+\s+\d+ I am_anr\s+:\s+\[(\d+,){2}(.*),\d+,.*\]"
@@ -32,7 +32,7 @@ LAUNCH_PATTERN = r'(.*)\s+\d+\s+\d+ I am_activity_launch_time:\s+\[\d+,\d+,(.*),
 BBK_LANUCHER = "com.bbk.launcher2"
 
 top10app = ["com.tencent.mobileqq", "com.qiyi.video", "com.tencent.karaoke", "com.tencent.mm", "com.kugou.android",
-            "com.tencent.qqlive", "com.eg.android.AlipayGphone", "com.taobao.taobao", "com.baidu.searchbox",
+            "com.tencent.qqlive", "com.eg.android.AlipayGphone", "com.taobao.taobao", "com.sina.weibo",
             "com.smile.gifmaker"]
 
 
@@ -57,6 +57,38 @@ class Parser(object):
         return flag
 
 
+class FocusedParser(Parser):
+    def parse(self, line, temp):
+        match_f = re.search(FOCUSED_PATTERN, line)
+        if match_f:
+            t = match_f.group(1).strip()
+            pkg = match_f.group(2)
+            ui = match_f.group(3)
+            print(t, pkg, ui)
+
+    pass
+
+
+# resume_called
+class ResumeCalledParser(Parser):
+    def parse(self, line, temp):
+        match_obj = re.search(RESUME_CALLED_PATTERN, line)
+        if match_obj:
+            t = match_obj.group(1).strip()
+            pkg = match_obj.group(2)
+            # ui = match_obj.group(3)
+            if pkg.startswith("com.tencent.tmgp.sgame"):
+                temp["time"].append(t)
+                temp["pkg"].append("com.tencent.tmgp.sgame")
+
+            # for n in top10app:
+            #     if pkg.find(n) != -1:
+            #         # pkg = n
+            #         # activity = activity[len(n):]
+            #         temp["time"].append(t)
+            #         temp["pkg"].append(n)
+            #         break
+
 class LauncherParser(Parser):
     def parse(self, line, temp_launch):
         match_launch = re.search(LAUNCH_PATTERN, line)
@@ -69,8 +101,8 @@ class LauncherParser(Parser):
 
             temp_launch.get("time").append(time)
             temp_launch.get("ui").append(ui)
-            temp_launch.get("start").append(start)
-            temp_launch.get("total").append(total)
+            temp_launch.get("start").append(int(start))
+            temp_launch.get("total").append(int(total))
 
             # pass
 
@@ -167,9 +199,6 @@ class ResumeParser(Parser):
         match_resume = re.search(RESUME_PATTERN, line)
         if match_resume:
             time = match_resume.group(1).strip()
-            # print("time", time)
-            # time_special = time[6:-5]
-            # print("time", time)
             pkgname = match_resume.group(3)
             activity = match_resume.group(4)
             # if pkgname not in top10app:
@@ -192,26 +221,26 @@ class ResumeParser(Parser):
             else:
                 temp_resume[pkgname] = [1, {activity: 1}, [time]]
             # 计算resume -> resume_called 的时间
-            for x in range(10):
-                if point + x < len(lines):
-                    match_resume2 = re.search(RESUME_CALLED_PATTERN, lines[point + x])
-                    if match_resume2:
-                        time2 = match_resume2.group(1)
-                        ui = match_resume2.group(2)
-
-                        if ui == pkgname + activity:
-                            interval = self.comparetime(time, time2)
-                            # print(ui, interval)
-                            temp2["time"].append(time)
-                            temp2["ui"].append(ui)
-                            temp2["interval"].append(interval)
-                            # if ui in temp2.keys():
-                            #     v = temp2.get(ui)
-                            #     v[0].append(time)
-                            #     v[1].append(interval)
-                            # else:
-                            #     temp2[ui] = [[time], ui [interval]]
-                            break
+            # for x in range(10):
+            #     if point + x < len(lines):
+            #         match_resume2 = re.search(RESUME_CALLED_PATTERN, lines[point + x])
+            #         if match_resume2:
+            #             time2 = match_resume2.group(1)
+            #             ui = match_resume2.group(2)
+            #
+            #             if ui == pkgname + activity:
+            #                 interval = self.comparetime(time, time2)
+            #                 # print(ui, interval)
+            #                 temp2["time"].append(time)
+            #                 temp2["ui"].append(ui)
+            #                 temp2["interval"].append(interval)
+            #                 # if ui in temp2.keys():
+            #                 #     v = temp2.get(ui)
+            #                 #     v[0].append(time)
+            #                 #     v[1].append(interval)
+            #                 # else:
+            #                 #     temp2[ui] = [[time], ui [interval]]
+            #                 break
 
 
 class AnrParser(Parser):
@@ -282,7 +311,7 @@ class ScreenParser(Parser):
                     # match_focused = re.search(FOCUSED_PATTERN, line_focused)
                     match_focused = re.search(FOCUSED_PATTERN, line_focused)
                     if match_focused:
-                        pkgname = match_focused.group(1).strip()
+                        pkgname = match_focused.group(2).strip()
                         # temp_screen_resume
                         temp_screen_focused["count"] += 1
                         if pkgname in temp_screen_focused:

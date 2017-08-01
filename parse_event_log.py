@@ -76,8 +76,9 @@ class EventLog:
         results = {'count_time': 0,
                    'resume': {},
                    'resume2': {"time": [], "ui": [], "interval": []},
-                   'resume3': {"time": [], "pkg": []},
-                   'resume4': {"time": [], "pkg": []},
+                   'resume3': {"time": [], "pkg": []},  # resume 的所有记录
+                   'resume4': {"time": [], "pkg": []},  # 灭屏的数据
+                   'resume_called': {"time": [], "pkg": []},
                    'crash': {}, 'anr': {},
                    'screen': {},
                    "proc": {},
@@ -127,6 +128,7 @@ class EventLog:
                 line = lines[x]
 
                 if line.find("am_resume_activity") != -1:  # resume的数据
+                    # if line.find("am_on_resume_called") != -1:  # resume的数据
                     # 06-09 21:46:53.637
                     # self.resume_parser(line, temp_resume)
                     ResumeParser().parse(line, result.get('resume'), x, lines, result.get('resume2'),
@@ -163,9 +165,11 @@ class EventLog:
                 elif line.find("battery_level") != -1:
                     BatteryParser().parse(line, result.get("battery"))
 
-                elif line.find("") != -1:
+                elif line.find("am_activity_launch_time") != -1:
                     LauncherParser().parse(line, result.get("launch"))
 
+                elif line.find("am_on_resume_called") != -1:
+                    ResumeCalledParser().parse(line, result.get("resume_called"))
                 else:
                     pass
                     # continue
@@ -188,15 +192,15 @@ class EventLog:
         # resume 的数据
         v = results.get("resume")
         v = sorted(v.items(), key=lambda d: d[1][0], reverse=True)
-        # print v
+        # print(v)
         t = ParseThread(self.make_resume_sheets, (v, "resume", REPORT_PATH + prefix_name + RESUME_REPORT),
                         "resume")
         threads.append(t)
         #
         # # 进程启动
         # v = results.get("proc")
-        t = ParseThread(self.make_proc_sheets, (results, REPORT_PATH + prefix_name + PROC_REPORT), "proc")
-        threads.append(t)
+        # t = ParseThread(self.make_proc_sheets, (results, REPORT_PATH + prefix_name + PROC_REPORT), "proc")
+        # threads.append(t)
         #
         # # 异常数据 anr crash
         # t = ParseThread(self.make_except_sheets, (results, REPORT_PATH + prefix_name + EXCEPT_REPORT), "except")
@@ -230,10 +234,14 @@ class EventLog:
         self.threads_run(threads)
 
         # 进程启动时间和内存状态
-        # self.make_launch_sheets(results, "111")
+        # self.make_launch_sheets(results)
 
         # app resume time 的时间序列包括灭屏的
+        # print(results.get("resume_called"))
+        # print(DataFrame(results.get("resume_called")))
         app_results = DataFrame(results.get("resume3")).append(DataFrame(results.get("resume4")))
+        app_results = app_results[app_results['pkg'] != "com.tencent.tmgp.sgame"]
+        app_results = app_results.append(DataFrame(results.get("resume_called")))
 
         # 应用的使用时长
         self.make_app_use_time_sheet(app_results)
@@ -253,7 +261,7 @@ class EventLog:
         # 计算下一个应用 pkg
         # 第2次跳转是桌面com.bbk.launcher2 或者近期任务栏 com.vivo.upslide.recents.RecentsActivity
 
-        l = ['com.bbk.launcher2', 'com.vivo.upslide.recents.RecentsActivity']
+        # l = ['com.bbk.launcher2', 'com.vivo.upslide.recents.RecentsActivity']
         writer_to = pd.ExcelWriter("csv_record/to.xlsx")
         uniquepkg = data['pkg'].unique()
         # for p in uniquepkg:
@@ -279,7 +287,10 @@ class EventLog:
     def make_app_use_time_sheet(self, results):
         # com.tencent.tmgp.sgame
         # 应用的时长关系
+        # results.to_csv("csv_record/results.csv")
+
         df_all = results.sort_values("time")  # .sort_index()
+        df_all.to_csv("csv_record/all.csv")
         # df_all = pd.merge(df_resume3, df_resume4, how="outer", on="time")
         df_all['next_time'] = df_all["time"].shift(-1)
         f1 = "%m-%d %H:%M:%S.%f"
@@ -292,35 +303,39 @@ class EventLog:
         # print(d.values(), d.keys())
         df_final = DataFrame(data=list(d.values()), columns=["time"], index=list(d.keys())).sort_values(by=['time'],
                                                                                                         ascending=False)
-        df_final['minutes'] = [x.total_seconds() / 60.0 for x in df_final.time]
+        df_final['seconds'] = [x.total_seconds() for x in df_final.time]
+        df_final['minutes'] = df_final['seconds'] / 60.0
         w = pd.ExcelWriter("csv_record/fgtime.xlsx")
         df_final.to_excel(w)
 
     # 启动时间和内存关系
     def make_launch_sheets(self, results):
-        # results.get("launch")
         df_launch = DataFrame(results.get("launch")).set_index("time").sort_index()
-        df_launch.to_csv("csv_record/launch.csv")
+        # df_launch.to_csv("csv_record/launch.csv")
+        # print(df_launch.dtypes)
+        # 删除>6000ms
+        df_launch = df_launch[df_launch['start'] < 6000]
 
         df_mem = DataFrame(results.get("mem")).set_index("time").sort_index()
         df_mem["free_cached"] = (df_mem["free"].astype(np.float64) + df_mem["cached"].astype(np.float64)) / MB
 
-        df_resume2 = DataFrame(results.get("resume2")).set_index("time").sort_index()
-        df_resume2.to_csv("csv_record/resume.csv")
+        # df_resume2 = DataFrame(results.get("resume2")).set_index("time").sort_index()
+        # df_resume2.to_csv("csv_record/resume.csv")
+        # df_resume2 = df_resume2[df_resume2['interval'] < 6000]
 
         # print(df_resume2)
         # print(df_launch)
         # print(df_mem)
 
-        x1 = [parse(item) for item in df_resume2.index]
+        # x1 = [parse(item) for item in df_resume2.index]
         x2 = [parse(item) for item in df_mem.index]
         x3 = [parse(item) for item in df_launch.index]
 
-        x_time = pd.date_range(datetime.datetime.date(x1[0]), periods=24, freq='H')
-        plt.xticks(x_time, [x for x in range(24)])
+        x_time = pd.date_range(datetime.datetime.date(x2[0]), periods=24 * 4 + 1, freq='H')
+        plt.xticks(x_time, [x for x in range(24 * 4 + 1)])
 
         plt.plot(x2, df_mem["free_cached"], "b-", label="mem")
-        plt.plot(x1, df_resume2["interval"], "r-", label="resume_time")
+        # plt.plot(x1, df_resume2["interval"], "r-", label="resume_time")
         plt.plot(x3, df_launch["start"], "y-", label="launch_time")
 
         plt.xlabel("time")
@@ -328,6 +343,7 @@ class EventLog:
 
         plt.legend(loc="best")
         plt.show()
+        # plt.save("launch.png")
         # pass
 
     def __make_battery_sheets(self, battery, xlsx_name):

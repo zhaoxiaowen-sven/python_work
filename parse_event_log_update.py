@@ -70,7 +70,8 @@ def parse_proc():
                                 break
 
                 f.seek(index, 0)
-            if not line: break
+            if not line:
+                break
         return proc_dict
 
 # def parse2():

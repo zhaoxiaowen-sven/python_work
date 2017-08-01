@@ -256,19 +256,65 @@ from pandas import DataFrame,Series
 #     total = match_obj.group(4)
 #     print(time, ui, launch, total)
 
+#
+# import sqlite3
+# conn = sqlite3.connect("resume.db")
+# cur = conn.cursor()
+# cur.execute('''
+#     CREATE TABLE IF NOT EXISTS resume (
+#         id INTEGER PRIMARY KEY AUTOINCREMENT,
+#         imei text,
+#         time text,
+#         pkg text
+#     )
+#     ''')
+#
+# df = DataFrame(data=np.arange(12).reshape(4,3),columns=['imei', 'time', 'pkg'])
+# print(df)
+# df.to_sql("resume", conn, index=False, if_exists="append")
 
-import sqlite3
-conn = sqlite3.connect("resume.db")
-cur = conn.cursor()
-cur.execute('''
-    CREATE TABLE IF NOT EXISTS resume (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        imei text,
-        time text,
-        pkg text
-    )
-    ''')
+# line = "07-23 15:58:20.475  1449  1561 I am_focused_activity: [0,com.sina.weibo/.MainTabActivity]"
+# FOCUSED_PATTERN = r"(.*)\s+\d+\s+\d+ I am_focused_activity: \[\d+,(.*)/(.*)\]"
+#
+# match_f = re.search(FOCUSED_PATTERN, line)
+# if match_f:
+#     t = match_f.group(1).strip()
+#     pkg = match_f.group(2)
+#     ui = match_f.group(3)
+#
+#     print(t, pkg, ui)
 
-df = DataFrame(data=np.arange(12).reshape(4,3),columns=['imei', 'time', 'pkg'])
+df = DataFrame(data=np.arange(12).reshape(4,3),index=list("abcd"),columns=["one","two","three"])
+
+# def reassign(num):
+#     if num > 1:
+#         return 1
+    # return num
+# df['one'] = [reassign(num) for num in df['one'].tolist()]
+df = df[df['one']<5]
 print(df)
-df.to_sql("resume", conn, index=False, if_exists="append")
+# print(df[df['one']!=3])
+
+line = "07-23 15:59:21.275  9215  9215 I am_on_resume_called: [0,com.sina.weibo.feed.HomeActivity]"
+
+RESUME_CALLED_PATTERN = r"(.*)\s+\d+\s+\d+ I am_on_resume_called: \[\d,(.*)\]"
+top10app = ["com.tencent.mobileqq", "com.qiyi.video", "com.tencent.karaoke", "com.tencent.mm", "com.kugou.android",
+            "com.tencent.qqlive", "com.eg.android.AlipayGphone", "com.taobao.taobao", "com.sina.weibo",
+            "com.smile.gifmaker","com.zhihu.android"]
+match_resume2 = re.search(RESUME_CALLED_PATTERN, line)
+if match_resume2:
+    time = match_resume2.group(1).strip()
+    pkgname = match_resume2.group(2)
+    activity = pkgname
+    for n in top10app:
+        index = pkgname.find(n)
+        print(index)
+        if index != -1:
+            pkgname = n
+            activity = pkgname[index:]
+            print(pkgname, activity)
+            break
+        else:
+            pass
+
+            # return
