@@ -1,7 +1,6 @@
 *.xlsx
 logs
 report
-.idea
 .event_report
 .event_log
 .idea/
